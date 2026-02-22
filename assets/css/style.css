@@ -731,5 +731,14 @@ small {
   margin-bottom: 20px;
 }
 
+.side-nav li a i.material-icons {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  margin-top: -4px; 
+}
 
-
+.side-nav li a span {
+  vertical-align: middle;
+}
