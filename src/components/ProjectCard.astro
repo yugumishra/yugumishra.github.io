@@ -1,0 +1,116 @@
+---
+import { Image } from 'astro:assets';
+import Icon from './Icon.astro';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  title: string;
+  blurb: string;
+  bullets: string[];
+  href: string | null;
+  ariaLabel?: string | null;
+  revealHeading?: string | null;
+  image?: ImageMetadata | null;
+  imageAlt?: string;
+  /** Public-path GIF (Astro doesn't optimize GIFs). */
+  gif?: string | null;
+  /** Video sources, used in place of a heavy GIF. */
+  video?: { mp4: string; webm: string; poster: ImageMetadata } | null;
+  contain?: boolean;
+  callout?: { text: string; linkText: string; href: string } | null;
+}
+
+const {
+  title,
+  blurb,
+  bullets,
+  href,
+  ariaLabel,
+  revealHeading = 'Accomplishments',
+  image = null,
+  imageAlt = '',
+  gif = null,
+  video = null,
+  contain = false,
+  callout = null,
+} = Astro.props;
+
+// Bullets of the form "Tools: X, Y" keep their bolded label, as in the original.
+const split = (b: string) => {
+  const m = b.match(/^(Tools:)\s*(.*)$/s);
+  return m ? { label: m[1], rest: m[2] } : { label: null, rest: b };
+};
+---
+
+<article class="project">
+  <div class:list={['media', { contain }]}>
+    {
+      video ? (
+        <video
+          autoplay
+          loop
+          muted
+          playsinline
+          preload="metadata"
+          poster={video.poster.src}
+          aria-label={imageAlt}
+        >
+          <source src={video.webm} type="video/webm" />
+          <source src={video.mp4} type="video/mp4" />
+        </video>
+      ) : gif ? (
+        <img src={gif} alt={imageAlt} loading="lazy" decoding="async" />
+      ) : image ? (
+        <Image src={image} alt={imageAlt} loading="lazy" decoding="async" />
+      ) : null
+    }
+  </div>
+
+  <div class="body">
+    <h3>{title}</h3>
+    <p class="blurb">{blurb}</p>
+
+    {
+      callout && (
+        <p class="callout">
+          <Icon name="pen" size={15} />
+          <span>
+            {callout.text}{' '}
+            <a href={callout.href} target="_blank" rel="noopener">
+              {callout.linkText}
+            </a>
+          </span>
+        </p>
+      )
+    }
+
+    <details>
+      <summary>
+        <span>{revealHeading}</span>
+        <Icon name="chevron" size={15} class="chev" />
+      </summary>
+      <ul>
+        {
+          bullets.map((b) => {
+            const { label, rest } = split(b);
+            return (
+              <li>
+                {label && <b>{label}</b>} {rest}
+              </li>
+            );
+          })
+        }
+      </ul>
+    </details>
+
+    {
+      href && (
+        <div class="links">
+          <a class="button" href={href} target="_blank" rel="noopener" aria-label={ariaLabel ?? undefined}>
+            <Icon name="external" size={14} /> View project on GitHub
+          </a>
+        </div>
+      )
+    }
+  </div>
+</article>

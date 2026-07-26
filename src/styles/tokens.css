@@ -1,0 +1,31 @@
+/* Design tokens — copied verbatim from the Yope3D blog so the two sites read
+   as one family. If these change here, change them in the blog too:
+   Yope3D/v2/Yope3D/site/src/pages/{index,blog/index,blog/[...slug]}.astro
+
+   Dark-only by design. Don't add a light theme unless asked. */
+:root {
+  --bg: #0b0d10;
+  --surface: #12151a;
+  --border: #232830;
+  --text: #e6e9ee;
+  --muted: #9aa3b0;
+  --accent: #6ea8fe;
+
+  /* draft/warning accent used on the blog */
+  --warn: #f0b429;
+
+  /* Light "plate" behind artwork that was drawn for a white page: logos with
+     transparent backgrounds and dark strokes (Unity, C++, C#), document
+     previews, and diagrams (the JavaAI SVG is pure #000 line work). Without
+     it those images are unreadable on the dark surface. */
+  --plate: #f5f7fa;
+
+  /* Layout constants shared across the site */
+  --sidebar-w: 210px;
+  --content-max: 64rem;
+  --radius-card: 0.75rem;
+  --radius-btn: 0.5rem;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+}

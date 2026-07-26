@@ -1,0 +1,452 @@
+{
+  "head": {
+    "title": "Yugank Mishra | Freshman at UTD",
+    "og": {
+      "og:locale": "en_US",
+      "og:type": "website",
+      "og:title": "Yugank Mishra | UTD Freshman",
+      "og:description": "High School Senior",
+      "og:url": "https://github/yugumishra",
+      "og:site_name": "Yugank Mishra | UTD Freshman",
+      "article:publisher": "https://github/yugumishra",
+      "og:image": "https://github/yugumishra"
+    },
+    "google_site_verification": "_qxK8tePiU2fhnwlwnJ7pkDFnj1k2EiKq_cYGy1Cb84"
+  },
+  "nav": [
+    {
+      "label": "",
+      "href": "#intro",
+      "aria_label": "Navigate to the beginning of the page",
+      "icon_class": null,
+      "icon_text": null,
+      "is_logo": true,
+      "img": "/assets/img/ladybug.jpg",
+      "target": null
+    },
+    {
+      "label": "About",
+      "href": "#about",
+      "aria_label": "Navigate to the About section",
+      "icon_class": "mdi-social-person small",
+      "icon_text": "",
+      "is_logo": false,
+      "img": null,
+      "target": null
+    },
+    {
+      "label": "Experience",
+      "href": "#experience",
+      "aria_label": "Navigate to the Experience section",
+      "icon_class": "mdi-action-trending-up small",
+      "icon_text": "",
+      "is_logo": false,
+      "img": null,
+      "target": null
+    },
+    {
+      "label": "Papers",
+      "href": "#papers",
+      "aria_label": "Navigate to the Papers section",
+      "icon_class": "material-icons small",
+      "icon_text": "biotech",
+      "is_logo": false,
+      "img": null,
+      "target": null
+    },
+    {
+      "label": "Projects",
+      "href": "#projects",
+      "aria_label": "Navigate to the Projects section",
+      "icon_class": "mdi-av-my-library-books small",
+      "icon_text": "",
+      "is_logo": false,
+      "img": null,
+      "target": null
+    },
+    {
+      "label": "Skills",
+      "href": "#skills",
+      "aria_label": "Navigate to the Skills section",
+      "icon_class": "mdi-action-assessment small",
+      "icon_text": "",
+      "is_logo": false,
+      "img": null,
+      "target": null
+    },
+    {
+      "label": "Education",
+      "href": "#education",
+      "aria_label": "Navigate to the Education section",
+      "icon_class": "mdi-social-school small",
+      "icon_text": "",
+      "is_logo": false,
+      "img": null,
+      "target": null
+    },
+    {
+      "label": "Contact",
+      "href": "#contact",
+      "aria_label": "Navigate to the Contact section",
+      "icon_class": "mdi-content-mail small",
+      "icon_text": "",
+      "is_logo": false,
+      "img": null,
+      "target": null
+    },
+    {
+      "label": "Resume",
+      "href": "assets/resume/Resume.pdf",
+      "aria_label": "Open Yugank's resume in a new tab",
+      "icon_class": "mdi-file-folder-open small",
+      "icon_text": "",
+      "is_logo": false,
+      "img": null,
+      "target": "_blank"
+    }
+  ],
+  "mobile_bar": {
+    "name": "Yugank Mishra",
+    "subtitle": "UTD Freshman"
+  },
+  "hero": {
+    "greeting_prefix": "Hi, I'm",
+    "greeting_name": "Yugank Mishra.",
+    "greeting_full": "Hi, I'm Yugank Mishra.",
+    "typed_prefix": "A",
+    "tagline": "focused, enthusiastic, passionate coder who enjoys solving complex real-world problems.",
+    "social": [
+      {
+        "href": "https://github.com/yugumishra/",
+        "icon": "fa fa-github"
+      }
+    ],
+    "buttons": [
+      {
+        "label": "Read More",
+        "href": "#about",
+        "class": "readme"
+      },
+      {
+        "label": "Contact Me",
+        "href": "#contact",
+        "class": "contactme"
+      }
+    ],
+    "typed_strings": [
+      "Coder",
+      "Math Lover",
+      "Physics Fanatic",
+      "AI Enthusiast"
+    ]
+  },
+  "about": {
+    "paragraphs": [
+      "I'm a freshman at the University of Texas at Dallas. I enjoy problem-solving and coding. I'm an eager learner of anything and I always strive to bring 100% to the work I do. I have worked using languages like Java, Python, C/C++, and C# using technologies like LWJGL, OpenGL, Keras, and Unity, etc during my programming experience. I am passionate about developing applications that solve real world issues that occur at the unique intersection of physics, math, and computer science.",
+      "I am looking for an opportunity to learn more about the fields of AI, Software Development, game development, as well as learn as much as I can about everything computer science!"
+    ],
+    "lists": [
+      [
+        {
+          "label": "Languages:",
+          "value": "Java, Python, C/C++, C#, SQL"
+        },
+        {
+          "label": "Libraries:",
+          "value": "LWJGL, OpenGL, Keras, Numpy, Tensorflow"
+        },
+        {
+          "label": "Frameworks:",
+          "value": "Unity Engine"
+        }
+      ]
+    ]
+  },
+  "experience": [
+    {
+      "org": "UT Dallas Clark Summer Research Program",
+      "href": "https://honors.utdallas.edu/2025/08/26/clark-program-provides-preview-of-college-life-research/",
+      "role": "Researcher",
+      "bullets": [
+        "Researched in Dr. Wei Yang's lab studying efficiency attacks on deep automatic speech recognition pipelines.",
+        "Presented research work at a research symposium (SPUR) and won an award from the Department of Computer Science.",
+        "Tools: PyTorch, Python, Git, Kaggle"
+      ],
+      "date": "May 2025 - August 2025"
+    },
+    {
+      "org": "SAT Tutor through schoolhouse.world",
+      "href": "https://schoolhouse.world/u/269283",
+      "role": "Tutor",
+      "bullets": [
+        "Helped students prepare for their SATs through bootcamp tutorials",
+        "Taught 4 students, giving a personalized lesson plan for each one to identify their weaknesses & practice them.",
+        "Tools: schoolhouse.world"
+      ],
+      "date": "Feb 2024 - March 2024"
+    }
+  ],
+  "papers": [
+    {
+      "title": "User Syntax vs LLM Perfection",
+      "href": "assets/papers/user_syntax_vs_llm_perfection.pdf",
+      "img": "assets/img/user_syntax_heatmaps.png",
+      "img_alt": "User Syntax vs LLM Perfection",
+      "img_style": "height: 250px; object-fit: cover;",
+      "venue": "MATS Winter 2025 Submission February • 2026"
+    },
+    {
+      "title": "Efficiency Attacks on Deep Automatic Speech Recognition Pipelines",
+      "href": "assets/papers/clark_poster.pdf",
+      "img": "/assets/img/clark_attack_scheme.png",
+      "img_alt": "Research Paper Title",
+      "img_style": "height: 250px; object-fit: contain;",
+      "venue": "Published in UTD SPUR Symposium • 2025"
+    }
+  ],
+  "projects": [
+    {
+      "title": "Yope3D",
+      "blurb": "A 3D graphics Engine made from LWJGL and Java.",
+      "img": "/assets/img/yope_cloth_b.gif",
+      "img_alt": "quiz app",
+      "reveal_heading": "Accomplishments",
+      "bullets": [
+        "Tools: Java, LWJGL",
+        "A 3D graphics engine made from scratch with Java with many capabilities like model loading, transformation, a scripting interface, as well as bulit-in physics"
+      ],
+      "href": "https://github.com/yugumishra/Yope3D",
+      "aria_label": "Visit "
+    },
+    {
+      "title": "MNIST Beta VAE",
+      "blurb": "A neural network capable of generating human readable digits.",
+      "img": "/assets/img/digit_animation.gif",
+      "img_alt": "quiz app",
+      "reveal_heading": "Accomplishments",
+      "bullets": [
+        "Tools: Python, Keras, Numpy, Tensorflow",
+        "A Beta VAE model able to generate human readable digits.",
+        "Able to vary writing by tuning self-learned style parameters"
+      ],
+      "href": "https://github.com/yugumishra/MNIST-BetaVAE-Generator",
+      "aria_label": "Visit "
+    },
+    {
+      "title": "SpinStack",
+      "blurb": "A music exploration app focused on sharable song snippets.",
+      "img": "/assets/img/spinstack_demo.gif",
+      "img_alt": "quiz app",
+      "reveal_heading": "Accomplishments",
+      "bullets": [
+        "Tools: React, Node.js, Typescript, Supabase",
+        "A music discovery app with a modern, beach-themed, frontend, database management with Supabase, song playback with Spotify Web Playback SDK."
+      ],
+      "href": "https://github.com/acm-projects/SpinStack",
+      "aria_label": "Visit "
+    },
+    {
+      "title": "Java AI",
+      "blurb": "A built from scratch Java codebase capable of training various types of neural networks.",
+      "img": "/assets/img/java_ai_graphic.svg",
+      "img_alt": "Screenshot of web app",
+      "reveal_heading": "Accomplishments",
+      "bullets": [
+        "Tools: Java",
+        "Programmers can define a neural network type, train it using optimizers like Adam, and perform inference.",
+        "Alongside serialization, the networks made with JavaAI can do the MNIST task with 96% accuracy."
+      ],
+      "href": "https://github.com/yugumishra/JavaAI",
+      "aria_label": "Visit Blog website"
+    },
+    {
+      "title": "Polynomial Root Solver",
+      "blurb": "A simple Java application capable of solving for the roots of a polynomial.",
+      "img": "/assets/img/Polynomial.png",
+      "img_alt": "Screenshot of web app",
+      "reveal_heading": "Accomplishments",
+      "bullets": [
+        "Tools: Java",
+        "Users are able to input a polynomial and, using Newton's method, can solve for the roots of the polynomial (in an interval).",
+        "It is also able to display the derivative of the polynomial."
+      ],
+      "href": "https://github.com/yugumishra/Java-Polynomial-Solver",
+      "aria_label": "Visit Blog website"
+    },
+    {
+      "title": "3D Gravity Simulator",
+      "blurb": "A 3D gravity simulator that simulates orbital mechanics based on Java.",
+      "img": "/assets/img/3d_grav_b_3.gif",
+      "img_alt": "music streaming app",
+      "reveal_heading": "Accomplishments",
+      "bullets": [
+        "Tools: Java, Graphics2D Java library",
+        "A 3-body system that allows for complex manipulation of each body's data.",
+        "Camera manipulation system to allow for different views."
+      ],
+      "href": "https://github.com/yugumishra/gravitysim",
+      "aria_label": "Visit "
+    }
+  ],
+  "skills": {
+    "groups": [
+      {
+        "heading": "Languages",
+        "items": [
+          {
+            "name": "Java",
+            "img": "/assets/img/Java_logo_icon.png",
+            "img_alt": "Java Logo"
+          },
+          {
+            "name": "C/C++",
+            "img": "/assets/img/cppLogo.png",
+            "img_alt": "C/C++ Logo"
+          },
+          {
+            "name": "C#",
+            "img": "/assets/img/csharp_logo.png",
+            "img_alt": "C# Logo"
+          },
+          {
+            "name": "Python",
+            "img": "/assets/img/python-logo-2.png",
+            "img_alt": "Python Logo"
+          }
+        ]
+      },
+      {
+        "heading": "Libraries",
+        "items": [
+          {
+            "name": "LWJGL",
+            "img": "/assets/img/th.jfif",
+            "img_alt": "LWJGL Logo"
+          },
+          {
+            "name": "OpenGL",
+            "img": "/assets/img/opengl-png-3.png",
+            "img_alt": "OpenGL Logo"
+          },
+          {
+            "name": "Unity",
+            "img": "/assets/img/unity-69-logo.png",
+            "img_alt": "Unity Logo"
+          },
+          {
+            "name": "Tensorflow",
+            "img": "/assets/img/tensorflow-logo-1.png",
+            "img_alt": "Tensorflow Logo"
+          },
+          {
+            "name": "Keras",
+            "img": "/assets/img/keras-logo.png",
+            "img_alt": "Keras Logo"
+          },
+          {
+            "name": "Numpy",
+            "img": "/assets/img/numpy-logo-1.png",
+            "img_alt": "Numpy Logo"
+          }
+        ]
+      }
+    ],
+    "certificates": [
+      "Microsoft Technology Associate (Introduction to Programming using Java)",
+      "Information Technology Associate (Certiport)"
+    ]
+  },
+  "education": [
+    {
+      "school": "University of Texas at Dallas",
+      "href": "https://www.utdallas.edu",
+      "location": "Richardson, Texas",
+      "degree_lines": [
+        "Degree: Bachelor's of Science in Computer Science",
+        "GPA: N/A"
+      ],
+      "blocks": [
+        {
+          "label": "Relevant Coursework:",
+          "items": [
+            "Data Structures and Algorithms",
+            "Discrete Mathematics"
+          ]
+        },
+        {
+          "label": "Honors and Awards:",
+          "items": [
+            "Computing Scholars Member (CS^2)",
+            "Winner of Department of Computer Science SPUR Award"
+          ]
+        }
+      ]
+    },
+    {
+      "school": "Coppell High School",
+      "href": "https://www.coppellisd.com/chs",
+      "location": "Coppell, Texas",
+      "degree_lines": [
+        "Degree: High School Diploma",
+        "CGPA: 5.44/6.0"
+      ],
+      "blocks": [
+        {
+          "label": "Relevant Coursework:",
+          "items": [
+            "Graphics Programming",
+            "AP Calculus AB, BC, & Calculus III + Linear Algebra",
+            "CS 1, CS 2, AP Computer Science A, CS 3",
+            "AP Physics 1 & 2, AP Physics C: Mechanics, AP Physics C: Electricity & Magnetism"
+          ]
+        }
+      ]
+    }
+  ],
+  "contact": [
+    {
+      "label": "yugankmmishra@gmail.com",
+      "href": "mailto:yugankmmishra@gmail.com",
+      "icon": "fa fa-envelope",
+      "aria_label": "Email Me",
+      "tooltip": "Email Me"
+    },
+    {
+      "label": "github.com/yugumishra",
+      "href": "http://github.com/yugumishra",
+      "icon": "fa fa-github",
+      "aria_label": "View Me on GitHub",
+      "tooltip": "View Me on GitHub"
+    }
+  ],
+  "section_titles": [
+    {
+      "id": "about",
+      "title": "About"
+    },
+    {
+      "id": "experience",
+      "title": "Experience"
+    },
+    {
+      "id": "papers",
+      "title": "Papers"
+    },
+    {
+      "id": "projects",
+      "title": "Projects"
+    },
+    {
+      "id": "skills",
+      "title": "Skills"
+    },
+    {
+      "id": "education",
+      "title": "Education"
+    },
+    {
+      "id": "contact",
+      "title": "Contact"
+    }
+  ]
+}

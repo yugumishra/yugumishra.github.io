@@ -1,0 +1,236 @@
+---
+import '../styles/site.css';
+import Icon from '../components/Icon.astro';
+import content from '../data/content.json';
+import profilePic from '../assets/img/ladybug.jpg';
+
+const { head, nav, mobile_bar } = content;
+
+// Old Materialize/Font-Awesome icon classes → inline SVG names.
+const ICONS: Record<string, string> = {
+  'mdi-social-person': 'person',
+  'mdi-action-trending-up': 'trending',
+  'material-icons': 'biotech',
+  'mdi-av-my-library-books': 'books',
+  'mdi-action-assessment': 'assessment',
+  'mdi-social-school': 'school',
+  'mdi-content-mail': 'mail',
+  'mdi-file-folder-open': 'folder',
+};
+
+const iconFor = (cls: string | null) => {
+  if (!cls) return 'person';
+  const key = Object.keys(ICONS).find((k) => cls.includes(k));
+  return key ? ICONS[key] : 'person';
+};
+
+// The legacy nav pointed at assets/resume/Resume.pdf, which never existed —
+// the actual file on disk has always been the dated filename below.
+const RESUME = '/resume/Mishra__Yugank___Resume-feb-16.pdf';
+const fixHref = (href: string | null) =>
+  href && href.includes('Resume.pdf') ? RESUME : href;
+
+const navItems = nav
+  .filter((n) => !n.is_logo)
+  .map((n) => ({ ...n, href: fixHref(n.href) }));
+const logo = nav.find((n) => n.is_logo);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{head.title}</title>
+    <meta name="description" content={content.hero.tagline} />
+
+    <meta property="og:locale" content={head.og['og:locale']} />
+    <meta property="og:type" content={head.og['og:type']} />
+    <meta property="og:title" content={head.og['og:title']} />
+    <meta property="og:description" content={head.og['og:description']} />
+    <meta property="og:site_name" content={head.og['og:site_name']} />
+    <meta property="og:url" content="https://yugumishra.github.io/" />
+    <meta property="og:image" content={`https://yugumishra.github.io${profilePic.src}`} />
+
+    <meta name="google-site-verification" content={head.google_site_verification} />
+    <link rel="canonical" href="https://yugumishra.github.io/" />
+  </head>
+
+  <body>
+    <a class="skip-link" href="#intro">Skip to content</a>
+
+    <!-- Desktop sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <a href={logo?.href} aria-label={logo?.aria_label}>
+          <img src={profilePic.src} width="84" height="84" alt="avatar" />
+        </a>
+      </div>
+      <nav aria-label="Section navigation">
+        <ul>
+          {
+            navItems.map((item) => (
+              <li>
+                <a
+                  class="nav-link"
+                  href={item.href}
+                  aria-label={item.aria_label}
+                  target={item.target ?? undefined}
+                  rel={item.target === '_blank' ? 'noopener' : undefined}
+                >
+                  <Icon name={iconFor(item.icon_class)} size={17} />
+                  <span>{item.label}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Mobile top bar -->
+    <div class="mobile-bar">
+      <button class="menu-btn" id="menu-btn" aria-label="Open navigation" aria-expanded="false" aria-controls="drawer">
+        <Icon name="menu" size={20} />
+      </button>
+      <a class="name" href="#intro">
+        {mobile_bar.name}
+        <span class="subtitle">{mobile_bar.subtitle}</span>
+      </a>
+    </div>
+
+    <!-- Mobile drawer -->
+    <div class="scrim" id="scrim"></div>
+    <nav class="drawer" id="drawer" aria-label="Mobile navigation">
+      <ul>
+        {
+          navItems.map((item) => (
+            <li>
+              <a
+                class="nav-link"
+                href={item.href}
+                aria-label={item.aria_label}
+                target={item.target ?? undefined}
+                rel={item.target === '_blank' ? 'noopener' : undefined}
+              >
+                <Icon name={iconFor(item.icon_class)} size={17} />
+                <span>{item.label}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <main id="main">
+      <slot />
+      <footer>
+        <div class="wrap">© {new Date().getFullYear()} Yugank Mishra</div>
+      </footer>
+    </main>
+
+    <script>
+      // Mobile drawer
+      const btn = document.getElementById('menu-btn');
+      const drawer = document.getElementById('drawer');
+      const scrim = document.getElementById('scrim');
+
+      const setOpen = (open: boolean) => {
+        drawer?.classList.toggle('open', open);
+        scrim?.classList.toggle('open', open);
+        btn?.setAttribute('aria-expanded', String(open));
+      };
+
+      btn?.addEventListener('click', () =>
+        setOpen(!drawer?.classList.contains('open')),
+      );
+      scrim?.addEventListener('click', () => setOpen(false));
+      drawer?.querySelectorAll('a').forEach((a) =>
+        a.addEventListener('click', () => setOpen(false)),
+      );
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setOpen(false);
+      });
+
+      // Scrollspy — replaces Materialize's scrollSpy plugin.
+      const links = Array.from(
+        document.querySelectorAll<HTMLAnchorElement>('.nav-link[href^="#"]'),
+      );
+      const byId = new Map(
+        links.map((l) => [l.getAttribute('href')!.slice(1), l]),
+      );
+      const sections = Array.from(document.querySelectorAll('section[id]'));
+
+      const visible = new Set<string>();
+
+      // A smooth scroll crosses every section in between, which would strobe the
+      // highlight through them. Freeze the spy for the duration of a click-driven
+      // jump and show the destination immediately instead.
+      let spyLocked = false;
+      let settleTimer: ReturnType<typeof setTimeout>;
+
+      const settle = () => {
+        clearTimeout(settleTimer);
+        settleTimer = setTimeout(() => {
+          spyLocked = false;
+          setActive();
+        }, 700);
+      };
+
+      const setActive = () => {
+        if (spyLocked) return;
+        // Topmost visible section wins, so overlapping entries are deterministic
+        // rather than dependent on callback order.
+        let id = sections.find((s) => visible.has(s.id))?.id ?? null;
+
+        // Contact is short enough that it may never cross the trigger band, so
+        // pin the last section once the page is scrolled to the bottom.
+        const atBottom =
+          window.innerHeight + window.scrollY >=
+          document.documentElement.scrollHeight - 2;
+        if (atBottom) id = sections[sections.length - 1]?.id ?? id;
+
+        if (!id) return;
+        links.forEach((l) =>
+          l.classList.toggle('active', l.getAttribute('href') === `#${id}`),
+        );
+      };
+
+      const spy = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) visible.add(entry.target.id);
+            else visible.delete(entry.target.id);
+          });
+          setActive();
+        },
+        { rootMargin: '-45% 0px -50% 0px', threshold: 0 },
+      );
+      sections.forEach((s) => spy.observe(s));
+      window.addEventListener('scroll', setActive, { passive: true });
+
+      // Any in-page jump (sidebar, drawer, hero buttons, skip link) pins its
+      // destination straight away, then hands control back once scrolling stops.
+      document
+        .querySelectorAll<HTMLAnchorElement>('a[href^="#"]')
+        .forEach((a) =>
+          a.addEventListener('click', () => {
+            const id = a.getAttribute('href')!.slice(1);
+            if (!id || !document.getElementById(id)) return;
+            spyLocked = true;
+            links.forEach((l) =>
+              l.classList.toggle('active', l.getAttribute('href') === `#${id}`),
+            );
+            settle();
+          }),
+        );
+
+      // Ends the freeze as soon as the browser reports the scroll finished;
+      // the timeout in settle() covers browsers without scrollend.
+      window.addEventListener('scrollend', () => {
+        spyLocked = false;
+        setActive();
+      });
+    </script>
+  </body>
+</html>

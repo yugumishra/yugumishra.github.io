@@ -1,0 +1,353 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import content from '../data/content.json';
+import yope from '../data/yope.json';
+
+const { hero, about, experience, papers, projects, skills, education, contact } =
+  content;
+
+const titleFor = (id: string) =>
+  content.section_titles.find((s) => s.id === id)?.title ?? '';
+
+// ---- image resolution -------------------------------------------------------
+// Static images are optimized by Astro; GIFs live in /public/media untouched.
+const globbed = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/img/*.{png,jpg,jpeg,webp,svg}',
+  { eager: true },
+);
+const byName = new Map(
+  Object.entries(globbed).map(([p, m]) => [p.split('/').pop()!, m.default]),
+);
+
+const img = (src: string | null | undefined): ImageMetadata | null => {
+  if (!src) return null;
+  let name = src.split('/').pop()!;
+  if (name === 'th.jfif') name = 'th.jpg'; // JFIF renamed so Astro recognizes it
+  return byName.get(name) ?? null;
+};
+
+const poster = byName.get('yope_cloth_poster.jpg')!;
+
+// PDFs moved from assets/papers/ to public/papers/, so the extracted hrefs
+// (which preserve the legacy paths) need remapping to their served location.
+const docHref = (href: string | null) =>
+  href ? href.replace(/^\/?assets\/papers\//, '/papers/') : href;
+
+// ---- Yope3D card ------------------------------------------------------------
+// Copy is lifted verbatim from YOPE3D_readme.md (see src/data/yope.json); the
+// legacy card still described the retired Java/LWJGL engine.
+const f = yope.features;
+const yopeBullets = [
+  'Tools: C++20, Vulkan, Python, CMake, Catch2',
+  f['Physics'][0],
+  f['Rendering Capabilities'][0],
+  f['Scripting'][0],
+  f['Tooling & tests'][2],
+];
+
+// Per-project media wiring, keyed by the original card title.
+const MEDIA: Record<
+  string,
+  { gif?: string; video?: boolean; contain?: boolean }
+> = {
+  Yope3D: { video: true },
+  'MNIST Beta VAE': { gif: '/media/digit_animation.gif' },
+  SpinStack: { gif: '/media/spinstack_demo.gif' },
+  'Java AI': { contain: true },
+  'Polynomial Root Solver': { contain: true },
+  '3D Gravity Simulator': { gif: '/media/3d_grav_b_3.gif' },
+};
+
+// The phone number is deliberately not published; it was also purged from git
+// history. Email and GitHub remain.
+const contactRows = contact.filter((c) => !(c.icon ?? '').includes('fa-phone'));
+
+const ICON_FOR_CONTACT = (icon: string | null) =>
+  (icon ?? '').includes('github') ? 'github' : 'mail';
+---
+
+<Base>
+  {/* ---------------- intro ---------------- */}
+  <section id="intro" class="section">
+    <div class="wrap hero">
+      <h1>
+        {hero.greeting_prefix} <span class="name">{hero.greeting_name}</span>
+      </h1>
+      <p class="typed-line">
+        {hero.typed_prefix} <span class="typing" id="typing"></span><span class="caret"></span>
+      </p>
+      <p class="tagline">{hero.tagline}</p>
+
+      <div class="social">
+        {
+          hero.social.map((s) => (
+            <a class="icon-btn" href={s.href} target="_blank" rel="noopener" aria-label="GitHub profile">
+              <Icon name="github" size={19} />
+            </a>
+          ))
+        }
+      </div>
+
+      <div class="buttons">
+        {
+          hero.buttons.map((b, i) => (
+            <a class:list={['button', { primary: i === 0 }]} href={b.href}>
+              {b.label}
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ---------------- about ---------------- */}
+  <section id="about" class="section">
+    <div class="wrap about">
+      <h2 class="page-title">{titleFor('about')}</h2>
+      {about.paragraphs.map((p) => <p>{p}</p>)}
+      {
+        about.lists.map((list) => (
+          <ul class="facts">
+            {list.map((item) => (
+              <li>
+                <b>{item.label}</b>
+                {item.value}
+              </li>
+            ))}
+          </ul>
+        ))
+      }
+    </div>
+  </section>
+
+  {/* ---------------- experience ---------------- */}
+  <section id="experience" class="section">
+    <div class="wrap">
+      <h2 class="page-title">{titleFor('experience')}</h2>
+      <div class="stack">
+        {
+          experience.map((e) => (
+            <article class="card">
+              <div class="exp-head">
+                <h3>
+                  {e.href ? (
+                    <a href={e.href} target="_blank" rel="noopener">
+                      {e.org}
+                    </a>
+                  ) : (
+                    e.org
+                  )}
+                </h3>
+                <span class="exp-role">{e.role}</span>
+              </div>
+              <ul>
+                {e.bullets.map((b) => {
+                  const m = b.match(/^(Tools:)\s*(.*)$/s);
+                  return <li>{m ? <><b>{m[1]}</b> {m[2]}</> : b}</li>;
+                })}
+              </ul>
+              <p class="exp-date">{e.date}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ---------------- papers ---------------- */}
+  <section id="papers" class="section">
+    <div class="wrap">
+      <h2 class="page-title">{titleFor('papers')}</h2>
+      <div class="grid-2">
+        {
+          papers.map((p) => {
+            const src = img(p.img);
+            const contain = (p.img_style ?? '').includes('contain');
+            return (
+              <article class="paper">
+                <a class:list={['thumb', { contain }]} href={docHref(p.href)} target="_blank" rel="noopener">
+                  {src && <Image src={src} alt={p.img_alt ?? ''} loading="lazy" decoding="async" />}
+                </a>
+                <div class="body">
+                  <a href={docHref(p.href)} target="_blank" rel="noopener">{p.title}</a>
+                  <p class="venue">{p.venue}</p>
+                </div>
+              </article>
+            );
+          })
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ---------------- projects ---------------- */}
+  <section id="projects" class="section">
+    <div class="wrap">
+      <h2 class="page-title">{titleFor('projects')}</h2>
+      <div class="grid-3">
+        {
+          projects.map((p) => {
+            const media = MEDIA[p.title] ?? {};
+            const isYope = p.title === 'Yope3D';
+            return (
+              <ProjectCard
+                title={p.title}
+                blurb={isYope ? yope.tagline : p.blurb}
+                bullets={isYope ? yopeBullets : p.bullets}
+                href={p.href}
+                ariaLabel={p.aria_label}
+                revealHeading={p.reveal_heading}
+                image={media.gif || media.video ? null : img(p.img)}
+                imageAlt={p.img_alt ?? p.title}
+                gif={media.gif ?? null}
+                video={
+                  media.video
+                    ? {
+                        mp4: '/media/yope_cloth_b.mp4',
+                        webm: '/media/yope_cloth_b.webm',
+                        poster,
+                      }
+                    : null
+                }
+                contain={media.contain ?? false}
+                callout={
+                  isYope
+                    ? {
+                        text: 'more detail on the',
+                        linkText: 'Yope3D blog',
+                        href: yope.blog,
+                      }
+                    : null
+                }
+              />
+            );
+          })
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ---------------- skills ---------------- */}
+  <section id="skills" class="section">
+    <div class="wrap">
+      <h2 class="page-title">{titleFor('skills')}</h2>
+      {
+        skills.groups.map((g) => (
+          <div class="card skills-card">
+            <h3>{g.heading}</h3>
+            <div class="skill-grid">
+              {g.items.map((item) => {
+                const src = img(item.img);
+                return (
+                  <div class="skill">
+                    {src && <Image src={src} alt={item.img_alt ?? item.name} loading="lazy" decoding="async" />}
+                    <p>{item.name}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))
+      }
+      {
+        skills.certificates.length > 0 && (
+          <div class="card skills-card">
+            <h3>Certificates</h3>
+            <div class="cert-list">
+              {skills.certificates.map((c) => (
+                <div class="cert">{c}</div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+    </div>
+  </section>
+
+  {/* ---------------- education ---------------- */}
+  <section id="education" class="section">
+    <div class="wrap">
+      <h2 class="page-title">{titleFor('education')}</h2>
+      <div class="grid-2">
+        {
+          education.map((e) => (
+            <article class="card edu">
+              <h3>
+                {e.href ? (
+                  <a href={e.href} target="_blank" rel="noopener">{e.school}</a>
+                ) : (
+                  e.school
+                )}
+              </h3>
+              <p class="loc">{e.location}</p>
+              <p class="degree">
+                {e.degree_lines.map((line) => {
+                  const m = line.match(/^([^:]+:)\s*(.*)$/s);
+                  return (
+                    <>
+                      {m ? <><b>{m[1]}</b> {m[2]}</> : line}
+                      <br />
+                    </>
+                  );
+                })}
+              </p>
+              {e.blocks.map((b) => (
+                <div class="block">
+                  <b>{b.label}</b>
+                  <ul>
+                    {b.items.map((i) => <li>{i}</li>)}
+                  </ul>
+                </div>
+              ))}
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* ---------------- contact ---------------- */}
+  <section id="contact" class="section">
+    <div class="wrap">
+      <h2 class="page-title">{titleFor('contact')}</h2>
+      <div class="contact-list">
+        {
+          contactRows.map((c) => (
+            <a class="contact-row" href={c.href} target={c.href?.startsWith('mailto') ? undefined : '_blank'} rel="noopener" aria-label={c.aria_label}>
+              <Icon name={ICON_FOR_CONTACT(c.icon)} size={19} />
+              <span>{c.label}</span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script define:vars={{ strings: content.hero.typed_strings }}>
+  // Replaces typed.js (~20 lines vs. a vendored library), matching the blog's
+  // zero-dependency stance. Honors prefers-reduced-motion.
+  const el = document.getElementById('typing');
+  if (el && strings.length) {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      el.textContent = strings[0];
+    } else {
+      let i = 0, j = 0, deleting = false;
+      const tick = () => {
+        const word = strings[i];
+        el.textContent = word.slice(0, j);
+        if (!deleting && j < word.length) j++;
+        else if (deleting && j > 0) j--;
+        else if (!deleting) { deleting = true; setTimeout(tick, 1400); return; }
+        else { deleting = false; i = (i + 1) % strings.length; }
+        setTimeout(tick, deleting ? 40 : 80);
+      };
+      tick();
+    }
+  }
+</script>
