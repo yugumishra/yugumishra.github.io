@@ -20,6 +20,10 @@ interface Props {
   contain?: boolean;
   callout?: { text: string; linkText: string; href: string } | null;
   interactive?: boolean;
+  featured?: boolean;
+  status?: string | null;
+  technologies?: string[];
+  blogHref?: string | null;
 }
 
 const {
@@ -36,6 +40,10 @@ const {
   contain = false,
   callout = null,
   interactive = false,
+  featured = false,
+  status = null,
+  technologies = [],
+  blogHref = null,
 } = Astro.props;
 
 // Bullets of the form "Tools: X, Y" keep their bolded label, as in the original.
@@ -43,9 +51,22 @@ const split = (b: string) => {
   const m = b.match(/^(Tools:)\s*(.*)$/s);
   return m ? { label: m[1], rest: m[2] } : { label: null, rest: b };
 };
+
+const featuredBullets = bullets.filter((b) => !/^Tools:\s*/.test(b));
+const toolBullet = bullets.find((b) => /^Tools:\s*/.test(b));
+const techItems =
+  technologies.length > 0
+    ? technologies
+    : toolBullet
+      ? toolBullet
+          .replace(/^Tools:\s*/, '')
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
 ---
 
-<article class="project">
+<article class:list={['project', { featured }]}>
   <div class:list={['media', { contain }]}>
     {
       video ? (
@@ -70,13 +91,41 @@ const split = (b: string) => {
   </div>
 
   <div class="body">
+    {featured && status && <p class="project-status">{status}</p>}
     <h3>{title}</h3>
     <p class="blurb">{blurb}</p>
 
     {interactive && <MnistDigitDrawer />}
 
     {
-      callout && (
+      featured && (
+        <>
+          <ul class="featured-bullets">
+            {
+              featuredBullets.map((b) => {
+                const { label, rest } = split(b);
+                return (
+                  <li>
+                    {label && <b>{label}</b>} {rest}
+                  </li>
+                );
+              })
+            }
+          </ul>
+
+          {
+            techItems.length > 0 && (
+              <ul class="tech-list" aria-label="Technologies used">
+                {techItems.map((item) => <li>{item}</li>)}
+              </ul>
+            )
+          }
+        </>
+      )
+    }
+
+    {
+      callout && !featured && (
         <p class="callout">
           <Icon name="pen" size={15} />
           <span>
@@ -89,31 +138,46 @@ const split = (b: string) => {
       )
     }
 
-    <details>
-      <summary>
-        <span>{revealHeading}</span>
-        <Icon name="chevron" size={15} class="chev" />
-      </summary>
-      <ul>
-        {
-          bullets.map((b) => {
-            const { label, rest } = split(b);
-            return (
-              <li>
-                {label && <b>{label}</b>} {rest}
-              </li>
-            );
-          })
-        }
-      </ul>
-    </details>
+    {
+      !featured && (
+        <details>
+          <summary>
+            <span>{revealHeading}</span>
+            <Icon name="chevron" size={15} class="chev" />
+          </summary>
+          <ul>
+            {
+              bullets.map((b) => {
+                const { label, rest } = split(b);
+                return (
+                  <li>
+                    {label && <b>{label}</b>} {rest}
+                  </li>
+                );
+              })
+            }
+          </ul>
+        </details>
+      )
+    }
 
     {
-      href && (
+      (href || blogHref) && (
         <div class="links">
-          <a class="button" href={href} target="_blank" rel="noopener" aria-label={ariaLabel ?? undefined}>
-            <Icon name="external" size={14} /> View project on GitHub
-          </a>
+          {
+            href && (
+              <a class="button" href={href} target="_blank" rel="noopener" aria-label={ariaLabel ?? undefined}>
+                <Icon name="external" size={14} /> View project on GitHub
+              </a>
+            )
+          }
+          {
+            blogHref && (
+              <a class="button" href={blogHref} target="_blank" rel="noopener">
+                <Icon name="external" size={14} /> Read the Yope3D blog
+              </a>
+            )
+          }
         </div>
       )
     }

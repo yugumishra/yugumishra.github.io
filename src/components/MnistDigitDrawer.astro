@@ -9,37 +9,63 @@ const latentUrl = '/models/mnist-latent.json';
   data-model-url={modelUrl}
   data-latent-url={latentUrl}
 >
+  <div class="mnist-demo-copy">
+    <p class="mnist-demo-kicker">Interactive model</p>
+    <p>Explore the VAE's 16-dimensional latent space and generate a digit.</p>
+  </div>
   <button
     class="button mnist-open"
     type="button"
     data-mnist-open
     aria-expanded="false"
-    aria-controls="mnist-panel"
+    aria-controls="mnist-dialog"
   >
-    Open digit drawer
+    Open full-size digit drawer
   </button>
 
-  <div class="mnist-panel" id="mnist-panel" data-mnist-panel hidden>
-    <div class="mnist-output">
-      <canvas
-        data-mnist-canvas
-        width="28"
-        height="28"
-        role="img"
-        aria-label="Generated MNIST digit"
-      ></canvas>
-      <p class="mnist-status" data-mnist-status aria-live="polite">
-        Loading decoder…
-      </p>
-    </div>
+  <dialog
+    class="mnist-dialog"
+    id="mnist-dialog"
+    data-mnist-dialog
+    aria-labelledby="mnist-dialog-title"
+  >
+    <div class="mnist-dialog-shell">
+      <header class="mnist-dialog-header">
+        <div>
+          <p class="mnist-dialog-kicker">MNIST β-VAE</p>
+          <h4 id="mnist-dialog-title">Explore the latent space</h4>
+          <p>Drag a slider to change the handwriting style and generate a new digit.</p>
+        </div>
+        <button class="button mnist-close" type="button" data-mnist-close>
+          Close
+        </button>
+      </header>
 
-    <div class="mnist-controls">
-      <div class="mnist-slider-grid" data-mnist-sliders></div>
-      <button class="button mnist-reset" type="button" data-mnist-reset>
-        Reset sliders
-      </button>
+      <div class="mnist-panel">
+        <div class="mnist-output">
+          <p class="mnist-output-label">Generated digit</p>
+          <canvas
+            data-mnist-canvas
+            width="28"
+            height="28"
+            role="img"
+            aria-label="Generated MNIST digit"
+          ></canvas>
+          <p class="mnist-status" data-mnist-status aria-live="polite">
+            Loading decoder…
+          </p>
+        </div>
+
+        <div class="mnist-controls">
+          <p class="mnist-controls-label">Latent dimensions</p>
+          <div class="mnist-slider-grid" data-mnist-sliders></div>
+          <button class="button mnist-reset" type="button" data-mnist-reset>
+            Reset sliders
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
+  </dialog>
 </div>
 
 <script>
@@ -57,7 +83,8 @@ const latentUrl = '/models/mnist-latent.json';
 
   if (root) {
     const openButton = root.querySelector<HTMLButtonElement>('[data-mnist-open]');
-    const panel = root.querySelector<HTMLElement>('[data-mnist-panel]');
+    const dialog = root.querySelector<HTMLDialogElement>('[data-mnist-dialog]');
+    const closeButton = root.querySelector<HTMLButtonElement>('[data-mnist-close]');
     const canvas = root.querySelector<HTMLCanvasElement>('[data-mnist-canvas]');
     const status = root.querySelector<HTMLElement>('[data-mnist-status]');
     const sliders = root.querySelector<HTMLElement>('[data-mnist-sliders]');
@@ -71,6 +98,18 @@ const latentUrl = '/models/mnist-latent.json';
     let loadPromise: Promise<void> | null = null;
     let renderScheduled = false;
     let renderVersion = 0;
+
+    const setExpanded = (expanded: boolean) => {
+      openButton?.setAttribute('aria-expanded', String(expanded));
+    };
+
+    const closeDialog = () => {
+      if (!dialog) return;
+      if (dialog.open) dialog.close();
+      setExpanded(false);
+    };
+
+    dialog?.addEventListener('close', () => setExpanded(false));
 
     const setStatus = (message: string, busy = false) => {
       if (status) status.textContent = message;
@@ -205,12 +244,10 @@ const latentUrl = '/models/mnist-latent.json';
     };
 
     openButton?.addEventListener('click', async () => {
-      if (!panel || !openButton) return;
-      const opening = panel.hidden;
-      panel.hidden = !opening;
-      openButton.setAttribute('aria-expanded', String(opening));
-      openButton.textContent = opening ? 'Close digit drawer' : 'Open digit drawer';
-      if (!opening || decoder) return;
+      if (!dialog || !openButton) return;
+      if (!dialog.open) dialog.showModal();
+      setExpanded(true);
+      if (decoder) return;
 
       setStatus('Loading decoder…', true);
       openButton.disabled = true;
@@ -220,13 +257,12 @@ const latentUrl = '/models/mnist-latent.json';
       } catch (error) {
         console.error('Unable to load the MNIST decoder', error);
         setStatus('The decoder could not load. Try again.');
-        panel.hidden = true;
-        openButton.setAttribute('aria-expanded', 'false');
-        openButton.textContent = 'Open digit drawer';
       } finally {
         openButton.disabled = false;
       }
     });
+
+    closeButton?.addEventListener('click', closeDialog);
 
     resetButton?.addEventListener('click', () => {
       root.querySelectorAll<HTMLInputElement>('[data-latent-slider]').forEach(

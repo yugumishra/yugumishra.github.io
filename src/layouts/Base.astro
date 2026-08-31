@@ -26,9 +26,9 @@ const iconFor = (cls: string | null) => {
 
 // The legacy nav pointed at assets/resume/Resume.pdf, which never existed —
 // the actual file on disk has always been the dated filename below.
-const RESUME = '/resume/Mishra__Yugank___Resume-feb-16.pdf';
+const RESUME = '/resume/resume.pdf';
 const fixHref = (href: string | null) =>
-  href && href.includes('Resume.pdf') ? RESUME : href;
+  href && href.includes('resume.pdf') ? RESUME : href;
 
 const navItems = nav
   .filter((n) => !n.is_logo)

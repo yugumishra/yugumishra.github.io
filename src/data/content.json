@@ -96,7 +96,7 @@
     },
     {
       "label": "Resume",
-      "href": "assets/resume/Resume.pdf",
+      "href": "assets/resume/resume.pdf",
       "aria_label": "Open Yugank's resume in a new tab",
       "icon_class": "mdi-file-folder-open small",
       "icon_text": "",
@@ -110,11 +110,11 @@
     "subtitle": "UTD Sophomore"
   },
   "hero": {
-    "greeting_prefix": "Hi, I'm",
+    "greeting_prefix": "",
     "greeting_name": "Yugank Mishra.",
-    "greeting_full": "Hi, I'm Yugank Mishra.",
-    "typed_prefix": "A",
-    "tagline": "focused, enthusiastic, passionate coder who enjoys solving complex real-world problems.",
+    "greeting_full": "Yugank Mishra.",
+    "typed_prefix": "I'm working on ",
+    "tagline": "i like building... lots of things.",
     "social": [
       {
         "href": "https://github.com/yugumishra/",
@@ -123,7 +123,22 @@
     ],
     "buttons": [
       {
-        "label": "Read More",
+        "label": "Yope3D",
+        "href": "#about",
+        "class": "readme"
+      },
+      {
+        "label": "Research",
+        "href": "#about",
+        "class": "readme"
+      },
+      {
+        "label": "Fun Stuff",
+        "href": "#about",
+        "class": "readme"
+      },
+      {
+        "label": "Resume",
         "href": "#about",
         "class": "readme"
       },
@@ -134,11 +149,18 @@
       }
     ],
     "typed_strings": [
-      "Coder",
-      "Math Lover",
-      "Physics Fanatic",
-      "AI Enthusiast"
-    ]
+      "my custom c++ game engine",
+      "gjk for my game engine",
+      "rl villager sims using ppo",
+      "4d visualizers",
+      "2 papers for chi '26",
+      "spoiler free wikipedias for series i'm reading",
+      "mech interp on llms",
+      "a platformer game using my game engine",
+      "finetuning local models for library specific autocomplete",
+      "a compute scheduler for my own machine",
+      "optimized convolutions using custom mps kernels"
+      ]
   },
   "about": {
     "paragraphs": [

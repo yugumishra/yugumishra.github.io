@@ -62,6 +62,18 @@ const MEDIA: Record<
   '3D Gravity Simulator': { gif: '/media/3d_grav_b_3.gif' },
 };
 
+const yopeProject = projects.find((project) => project.title === 'Yope3D');
+const projectOrder = [
+  'SpinStack',
+  'MNIST Beta VAE',
+  'Java AI',
+  '3D Gravity Simulator',
+  'Polynomial Root Solver',
+];
+const otherProjects = projects
+  .filter((project) => project.title !== 'Yope3D')
+  .sort((a, b) => projectOrder.indexOf(a.title) - projectOrder.indexOf(b.title));
+
 // The phone number is deliberately not published; it was also purged from git
 // history. Email and GitHub remain.
 const contactRows = contact.filter((c) => !(c.icon ?? '').includes('fa-phone'));
@@ -188,16 +200,38 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
   <section id="projects" class="section">
     <div class="wrap">
       <h2 class="page-title">{titleFor('projects')}</h2>
-      <div class="grid-3">
+      {
+        yopeProject && (
+          <ProjectCard
+            title={yopeProject.title}
+            blurb={yope.tagline}
+            bullets={yopeBullets}
+            href={yopeProject.href}
+            ariaLabel={yopeProject.aria_label}
+            image={null}
+            imageAlt="Yope3D cloth simulation running in the engine"
+            video={{
+              mp4: '/media/yope_cloth_b.mp4',
+              webm: '/media/yope_cloth_b.webm',
+              poster,
+            }}
+            featured
+            status={yope.status}
+            technologies={['C++20', 'Vulkan', 'Python', 'CMake', 'Catch2']}
+            blogHref={yope.blog}
+          />
+        )
+      }
+
+      <div class="grid-3 project-grid">
         {
-          projects.map((p) => {
+          otherProjects.map((p) => {
             const media = MEDIA[p.title] ?? {};
-            const isYope = p.title === 'Yope3D';
             return (
               <ProjectCard
                 title={p.title}
-                blurb={isYope ? yope.tagline : p.blurb}
-                bullets={isYope ? yopeBullets : p.bullets}
+                blurb={p.blurb}
+                bullets={p.bullets}
                 href={p.href}
                 ariaLabel={p.aria_label}
                 revealHeading={p.reveal_heading}
@@ -215,15 +249,6 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
                 }
                 contain={media.contain ?? false}
                 interactive={p.title === 'MNIST Beta VAE'}
-                callout={
-                  isYope
-                    ? {
-                        text: 'more detail on the',
-                        linkText: 'Yope3D blog',
-                        href: yope.blog,
-                      }
-                    : null
-                }
               />
             );
           })
