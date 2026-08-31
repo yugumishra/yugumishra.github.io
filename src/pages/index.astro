@@ -89,10 +89,11 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
       <h1>
         {hero.greeting_prefix} <span class="name">{hero.greeting_name}</span>
       </h1>
-      <p class="typed-line">
-        {hero.typed_prefix} <span class="typing" id="typing"></span><span class="caret"></span>
-      </p>
       <p class="tagline">{hero.tagline}</p>
+      <p class="typed-line">
+        <span class="typed-prefix">{hero.typed_prefix}</span>
+        <span class="typing" id="typing"></span><span class="caret"></span>
+      </p>
 
       <div class="social">
         {
@@ -107,7 +108,12 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
       <div class="buttons">
         {
           hero.buttons.map((b, i) => (
-            <a class:list={['button', { primary: i === 0 }]} href={b.href}>
+            <a
+              class:list={['button', { primary: i === 0 }]}
+              href={b.href}
+              target={b.label === 'Resume' ? '_blank' : undefined}
+              rel={b.label === 'Resume' ? 'noopener' : undefined}
+            >
               {b.label}
             </a>
           ))
@@ -363,14 +369,51 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
     if (reduced) {
       el.textContent = strings[0];
     } else {
+      const shuffle = (items, avoidFirst) => {
+        const shuffled = [...items];
+
+        for (let index = shuffled.length - 1; index > 0; index -= 1) {
+          const swapIndex = Math.floor(Math.random() * (index + 1));
+          [shuffled[index], shuffled[swapIndex]] = [
+            shuffled[swapIndex],
+            shuffled[index],
+          ];
+        }
+
+        // A new permutation can still begin with the previous permutation's
+        // final word. Swap it away when there is another option.
+        if (avoidFirst && shuffled.length > 1 && shuffled[0] === avoidFirst) {
+          const swapIndex = shuffled.findIndex(
+            (word, index) => index > 0 && word !== avoidFirst,
+          );
+          if (swapIndex > 0) {
+            [shuffled[0], shuffled[swapIndex]] = [
+              shuffled[swapIndex],
+              shuffled[0],
+            ];
+          }
+        }
+
+        return shuffled;
+      };
+
+      let order = shuffle(strings);
       let i = 0, j = 0, deleting = false;
       const tick = () => {
-        const word = strings[i];
+        const word = order[i];
         el.textContent = word.slice(0, j);
         if (!deleting && j < word.length) j++;
         else if (deleting && j > 0) j--;
         else if (!deleting) { deleting = true; setTimeout(tick, 1400); return; }
-        else { deleting = false; i = (i + 1) % strings.length; }
+        else {
+          deleting = false;
+          if (i === order.length - 1) {
+            order = shuffle(strings, word);
+            i = 0;
+          } else {
+            i++;
+          }
+        }
         setTimeout(tick, deleting ? 40 : 80);
       };
       tick();

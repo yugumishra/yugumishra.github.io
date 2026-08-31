@@ -124,22 +124,22 @@
     "buttons": [
       {
         "label": "Yope3D",
-        "href": "#about",
+        "href": "#projects",
         "class": "readme"
       },
       {
         "label": "Research",
-        "href": "#about",
+        "href": "#papers",
         "class": "readme"
       },
       {
         "label": "Fun Stuff",
-        "href": "#about",
+        "href": "#mnist-digit-drawer",
         "class": "readme"
       },
       {
         "label": "Resume",
-        "href": "#about",
+        "href": "/resume/resume.pdf",
         "class": "readme"
       },
       {
