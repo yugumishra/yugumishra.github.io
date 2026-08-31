@@ -1,13 +1,13 @@
 {
   "head": {
-    "title": "Yugank Mishra | Freshman at UTD",
+    "title": "Yugank Mishra | Sophomore at UTD",
     "og": {
       "og:locale": "en_US",
       "og:type": "website",
-      "og:title": "Yugank Mishra | UTD Freshman",
-      "og:description": "High School Senior",
+      "og:title": "Yugank Mishra | UTD Sophomore",
+      "og:description": "Sophomore @ UT Dallas",
       "og:url": "https://github/yugumishra",
-      "og:site_name": "Yugank Mishra | UTD Freshman",
+      "og:site_name": "Yugank Mishra | UTD Sophomore",
       "article:publisher": "https://github/yugumishra",
       "og:image": "https://github/yugumishra"
     },
@@ -107,7 +107,7 @@
   ],
   "mobile_bar": {
     "name": "Yugank Mishra",
-    "subtitle": "UTD Freshman"
+    "subtitle": "UTD Sophomore"
   },
   "hero": {
     "greeting_prefix": "Hi, I'm",
@@ -142,7 +142,7 @@
   },
   "about": {
     "paragraphs": [
-      "I'm a freshman at the University of Texas at Dallas. I enjoy problem-solving and coding. I'm an eager learner of anything and I always strive to bring 100% to the work I do. I have worked using languages like Java, Python, C/C++, and C# using technologies like LWJGL, OpenGL, Keras, and Unity, etc during my programming experience. I am passionate about developing applications that solve real world issues that occur at the unique intersection of physics, math, and computer science.",
+      "I'm a sophomore at the University of Texas at Dallas. I enjoy problem-solving and coding. I'm an eager learner of anything and I always strive to bring 100% to the work I do. I have worked using languages like Java, Python, C/C++, and C# using technologies like LWJGL, OpenGL, Keras, and Unity, etc during my programming experience. I am passionate about developing applications that solve real world issues that occur at the unique intersection of physics, math, and computer science.",
       "I am looking for an opportunity to learn more about the fields of AI, Software Development, game development, as well as learn as much as I can about everything computer science!"
     ],
     "lists": [
@@ -163,6 +163,17 @@
     ]
   },
   "experience": [
+    {
+      "org": "Researcher at the Multimodal Interaction Lab",
+      "href": "https://mi-lab.io",
+      "role": "Researcher",
+      "bullets": [
+        "Researching air-based haptic and sensing mediums with a focus on ML approaches.",
+        "Submitted 2 papers to CHI '26 (awaiting decision)",
+        "Tools: Unity, Blender, C#, Arduino API, Python"
+      ],
+      "date": "September 2025 - Present"
+    },
     {
       "org": "UT Dallas Clark Summer Research Program",
       "href": "https://honors.utdallas.edu/2025/08/26/clark-program-provides-preview-of-college-life-research/",
@@ -212,8 +223,8 @@
       "img_alt": "quiz app",
       "reveal_heading": "Accomplishments",
       "bullets": [
-        "Tools: Java, LWJGL",
-        "A 3D graphics engine made from scratch with Java with many capabilities like model loading, transformation, a scripting interface, as well as bulit-in physics"
+        "Tools: C++, Vulkan",
+        "A C++20 Vulkan game engine from scratch: physics, 3D rendering, scripting, UI, and an in-house ImGui editor. Initially an old Java engine."
       ],
       "href": "https://github.com/yugumishra/Yope3D",
       "aria_label": "Visit "
@@ -312,6 +323,16 @@
             "name": "Python",
             "img": "/assets/img/python-logo-2.png",
             "img_alt": "Python Logo"
+          },
+          {
+            "name": "TypeScript",
+            "img": "/assets/img/typescript-logo-1.png",
+            "img_alt": "TypeScript logo"
+          },
+          {
+            "name": "React",
+            "img": "/assets/img/react-logo-1.png",
+            "img_alt": "React logo"
           }
         ]
       },
@@ -329,6 +350,12 @@
             "img_alt": "OpenGL Logo"
           },
           {
+            "name": "Vulkan",
+            "img": "/assets/img/vulkan-logo-1.png",
+            "img_alt": "Vulkan Logo"
+          },
+
+          {
             "name": "Unity",
             "img": "/assets/img/unity-69-logo.png",
             "img_alt": "Unity Logo"
@@ -337,6 +364,11 @@
             "name": "Tensorflow",
             "img": "/assets/img/tensorflow-logo-1.png",
             "img_alt": "Tensorflow Logo"
+          },
+          {
+            "name": "Pytorch",
+            "img": "/assets/img/pytorch-logo-1.png",
+            "img_alt": "Pytorch Logo"
           },
           {
             "name": "Keras",
@@ -363,7 +395,8 @@
       "location": "Richardson, Texas",
       "degree_lines": [
         "Degree: Bachelor's of Science in Computer Science",
-        "GPA: N/A"
+        "Degree: Bachelor's of Science in Mathematics",
+        "GPA: 3.9"
       ],
       "blocks": [
         {
@@ -377,7 +410,8 @@
           "label": "Honors and Awards:",
           "items": [
             "Computing Scholars Member (CS^2)",
-            "Winner of Department of Computer Science SPUR Award"
+            "Winner of Department of Computer Science SPUR Award",
+            "National Merit Scholarship Recipient (2025)"
           ]
         }
       ]
@@ -397,7 +431,7 @@
             "Graphics Programming",
             "AP Calculus AB, BC, & Calculus III + Linear Algebra",
             "CS 1, CS 2, AP Computer Science A, CS 3",
-            "AP Physics 1 & 2, AP Physics C: Mechanics, AP Physics C: Electricity & Magnetism"
+            "AP Physics 1 & 2, AP Physics C: Mech, AP Physics C: E&M"
           ]
         }
       ]
