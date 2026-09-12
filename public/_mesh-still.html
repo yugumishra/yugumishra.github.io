@@ -1,0 +1,86 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>mesh stills</title>
+<body style="margin:0;background:#111;color:#ccc;font:12px ui-monospace,monospace">
+<div id="out"></div>
+<script type="module">
+  import { createMeshShowcase, MESH_DEFAULTS } from '/src/scripts/showcase-mesh.ts';
+
+  // A checkerboard stands in for footage: the probes used exactly this control
+  // texture, and headless Firefox cannot decode the real clips.
+  function checker(hue) {
+    const c = document.createElement('canvas');
+    c.width = 640;
+    c.height = 360;
+    const g = c.getContext('2d');
+    const size = 8;
+    for (let y = 0; y < c.height; y += size) {
+      for (let x = 0; x < c.width; x += size) {
+        const on = ((x / size + y / size) % 2) === 0;
+        g.fillStyle = on ? `hsl(${hue}, 70%, 68%)` : `hsl(${hue}, 70%, 22%)`;
+        g.fillRect(x, y, size, size);
+      }
+    }
+    return c;
+  }
+  const useChecker = new URL(location.href).searchParams.get('tex') === 'checker';
+  const videos = [0, 1, 2, 3].map((i) => (useChecker ? checker(i * 90) : document.createElement('video')));
+  const canvas = document.createElement('canvas');
+  canvas.width = 1280;
+  canvas.height = 720;
+  const show = createMeshShowcase(canvas, videos);
+  const out = document.getElementById('out');
+  if (!show) {
+    out.textContent = 'NO WEBGL';
+  } else {
+    const url = new URL(location.href);
+    const cases = (url.searchParams.get('cases') || 'w1,w060,w030,shade,fold').split(',');
+    const base = {
+      ...MESH_DEFAULTS,
+      text: url.searchParams.get('text') || MESH_DEFAULTS.text,
+      columns: Number(url.searchParams.get('cols') || MESH_DEFAULTS.columns),
+      algorithm: url.searchParams.get('algo') || MESH_DEFAULTS.algorithm,
+      breath: Number(url.searchParams.get('breath') ?? MESH_DEFAULTS.breath),
+      spread: Number(url.searchParams.get('spread') ?? MESH_DEFAULTS.spread),
+      commit: url.searchParams.get('commit') === '1',
+      amplitudeAuto: false,
+    };
+    const spec = {
+      w1: { view: 1, amplitude: 1, label: 'wireframe a=1.00' },
+      w060: { view: 1, amplitude: 0.6, label: 'wireframe a=0.60' },
+      w030: { view: 1, amplitude: 0.3, label: 'wireframe a=0.30' },
+      w000: { view: 1, amplitude: 0, label: 'wireframe a=0.00 (breathing only)' },
+      shade: { view: 3, amplitude: 1, label: 'shading term a=1.00' },
+      tex: { view: 0, amplitude: 1, label: 'textured mesh a=1.00' },
+      tex0: { view: 0, amplitude: 0, label: 'textured mesh a=0.00' },
+      texflare: { view: 0, amplitude: 1, strength: 1.6, label: 'textured mesh a=1.00 strength 1.60' },
+      texnoshade: { view: 0, amplitude: 1, strength: 0, label: 'textured mesh a=1.00 no shading' },
+      texone: { view: 0, amplitude: 1, footage: 'single', label: 'textured mesh a=1.00 single clip' },
+      shade16: { view: 3, amplitude: 1, strength: 1.6, label: 'shading term a=1.00 strength 1.60' },
+      fold: { view: 4, amplitude: 1, label: 'folded cells a=1.00' },
+      disp: { view: 2, amplitude: 1, label: 'displacement a=1.00' },
+      clips: { view: 5, amplitude: 1, label: 'clip families a=1.00' },
+      clips0: { view: 5, amplitude: 0, label: 'clip families a=0.00 (idle jumble)' },
+      clips5: { view: 5, amplitude: 0.5, label: 'clip families a=0.50 (staggered commit)' },
+    };
+    for (const name of cases) {
+      const s = spec[name];
+      if (!s) continue;
+      const params = { ...base, ...s };
+      show.setParams(params);
+      show.solveNow();
+      show.setVisible(true);
+      show.frame(0);
+      const status = show.status();
+      const img = new Image();
+      img.src = canvas.toDataURL();
+      img.style.width = '640px';
+      img.style.display = 'block';
+      const label = document.createElement('div');
+      label.textContent = `${s.label} · spread ${params.spread} · ${status.columns} cols · ${status.cellsPerStroke.toFixed(2)} c/stroke · folds ${(status.foldRate * 100).toFixed(2)}% · solve ${status.solveMs.toFixed(0)} ms`;
+      out.append(label, img);
+    }
+    document.title = 'done';
+  }
+</script>
+</body>
