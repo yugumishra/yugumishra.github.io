@@ -17,6 +17,17 @@ interface Props {
   gif?: string | null;
   /** Video sources, used in place of a heavy GIF. */
   video?: { mp4: string; webm: string; poster: ImageMetadata } | null;
+  /**
+   * A second clip of the same moment, revealed beneath `video` when the card
+   * expands and kept in step with it. Both files must share a duration and
+   * frame rate, or they drift apart at the loop boundary.
+   */
+  syncedVideo?: {
+    mp4: string;
+    webm: string;
+    poster: ImageMetadata;
+    caption: string;
+  } | null;
   contain?: boolean;
   callout?: { text: string; linkText: string; href: string } | null;
   interactive?: boolean;
@@ -24,6 +35,7 @@ interface Props {
   status?: string | null;
   technologies?: string[];
   blogHref?: string | null;
+  stills?: { image: ImageMetadata; alt: string; caption: string; contain?: boolean }[];
 }
 
 const {
@@ -37,6 +49,7 @@ const {
   imageAlt = '',
   gif = null,
   video = null,
+  syncedVideo = null,
   contain = false,
   callout = null,
   interactive = false,
@@ -44,6 +57,7 @@ const {
   status = null,
   technologies = [],
   blogHref = null,
+  stills = [],
 } = Astro.props;
 
 // Bullets of the form "Tools: X, Y" keep their bolded label, as in the original.
@@ -64,10 +78,12 @@ const techItems =
           .map((item) => item.trim())
           .filter(Boolean)
       : [];
+const detailId = `project-detail-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 ---
 
-<article class:list={['project', { featured }]}>
+<article id={interactive ? 'mnist-digit-drawer' : undefined} class:list={['project', { featured, 'project-expandable': !featured, 'is-mnist': interactive, 'has-synced': !!syncedVideo }]}>
   <div class:list={['media', { contain }]}>
+    <figure class="media-slide">
     {
       video ? (
         <video
@@ -78,6 +94,7 @@ const techItems =
           preload="metadata"
           poster={video.poster.src}
           aria-label={imageAlt}
+          data-sync-primary={syncedVideo ? '' : undefined}
         >
           <source src={video.webm} type="video/webm" />
           <source src={video.mp4} type="video/mp4" />
@@ -88,6 +105,39 @@ const techItems =
         <Image src={image} alt={imageAlt} loading="lazy" decoding="async" />
       ) : null
     }
+    </figure>
+    {stills.map((still) => (
+      <figure class:list={['media-slide', { contain: still.contain }]} hidden>
+        <Image src={still.image} alt={still.alt} loading="lazy" decoding="async" />
+        <figcaption>{still.caption}</figcaption>
+      </figure>
+    ))}
+    {stills.length > 0 && (
+      <div class="media-controls" hidden>
+        <button type="button" class="media-prev" aria-label={`Previous ${title} image`}>‹</button>
+        <span class="media-count" aria-live="polite">1 / {stills.length + 1}</span>
+        <button type="button" class="media-next" aria-label={`Next ${title} image`}>›</button>
+      </div>
+    )}
+    {syncedVideo && (
+      <figure class="media-synced">
+        {/* preload="none": ~370KB that only matters once the card is opened. */}
+        <video
+          loop
+          muted
+          playsinline
+          preload="none"
+          poster={syncedVideo.poster.src}
+          aria-label={syncedVideo.caption}
+          data-sync-secondary
+        >
+          <source src={syncedVideo.webm} type="video/webm" />
+          <source src={syncedVideo.mp4} type="video/mp4" />
+        </video>
+        <figcaption>{syncedVideo.caption}</figcaption>
+      </figure>
+    )}
+    {interactive && <MnistDigitDrawer />}
   </div>
 
   <div class="body">
@@ -95,7 +145,17 @@ const techItems =
     <h3>{title}</h3>
     <p class="blurb">{blurb}</p>
 
-    {interactive && <MnistDigitDrawer />}
+    {interactive && (
+      <div class="mnist-demo">
+        <div class="mnist-demo-copy">
+          <p class="mnist-demo-kicker">Interactive model</p>
+          <p>Explore the VAE's 16-dimensional latent space and generate a digit.</p>
+        </div>
+        <button class="button mnist-open" type="button" aria-controls={detailId}>
+          Open full-size digit drawer
+        </button>
+      </div>
+    )}
 
     {
       featured && (
@@ -138,28 +198,23 @@ const techItems =
       )
     }
 
-    {
-      !featured && (
-        <details>
-          <summary>
-            <span>{revealHeading}</span>
-            <Icon name="chevron" size={15} class="chev" />
-          </summary>
+    {!featured && (
+      <>
+        <button type="button" class="project-detail-toggle" aria-expanded="false" aria-controls={detailId}>
+          <span>In detail</span>
+          <Icon name="chevron" size={15} class="chev" />
+        </button>
+        <div class="project-detail" id={detailId} hidden>
+          <h4>{revealHeading}</h4>
           <ul>
-            {
-              bullets.map((b) => {
-                const { label, rest } = split(b);
-                return (
-                  <li>
-                    {label && <b>{label}</b>} {rest}
-                  </li>
-                );
-              })
-            }
+            {bullets.map((b) => {
+              const { label, rest } = split(b);
+              return <li>{label && <b>{label}</b>} {rest}</li>;
+            })}
           </ul>
-        </details>
-      )
-    }
+        </div>
+      </>
+    )}
 
     {
       (href || blogHref) && (

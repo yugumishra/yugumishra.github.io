@@ -1,0 +1,370 @@
+---
+// `aliases` are the other words that should ground on this clip when the
+// family split is matched from the text. Greek is folded to its letter name
+// before matching, so 'beta-VAE' here also catches a word typed as 'BVAE'.
+const clips = [
+  { name: 'Yope3D', aliases: ['Yope'], src: '/media/yope_cloth_b.mp4', gray: '#000' },
+  { name: 'SpinStack', aliases: [], src: '/media/showcase-test/spinstack.mp4', gray: '#555' },
+  { name: 'Digits', aliases: ['beta-VAE', 'VAE', 'MNIST'], src: '/media/showcase-test/digits.mp4', gray: '#aaa' },
+  { name: 'Gravity', aliases: [], src: '/media/showcase-test/gravity.mp4', gray: '#fff' },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Sliding lettering — Yope3D showcase test</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <a href="/">← Portfolio</a>
+        <h1>Sliding lettering</h1>
+        <p>A moving mask over four playing clips. Compare floating lettering with text points that deform the lattice.</p>
+      </header>
+
+      <figure>
+        <div class="stage" id="stage" aria-busy="true">
+          <canvas id="showcase" width="1280" height="720" hidden role="img" aria-label="Yope3D lettering slides through a collage of four videos. The letter outlines separate different clips, including the enclosed spaces inside the letters."></canvas>
+          <canvas id="showcase-mesh" width="1280" height="720" role="img" aria-label="A fine lattice deforms so that its own edges arrange into the word, and the footage is textured through the deformed mesh."></canvas>
+          <canvas id="showcase-mesh-debug" width="1280" height="720" hidden aria-hidden="true"></canvas>
+          <canvas id="showcase-mesh-next" width="1280" height="720" hidden role="img" aria-label="The SpinStack project appears in the deformed video mesh."></canvas>
+          <canvas id="showcase-mesh-next-debug" width="1280" height="720" hidden aria-hidden="true"></canvas>
+          <p id="loading" role="status">Loading clips…</p>
+        </div>
+        <figcaption>
+          <span id="m-project-caption">Yope3D / sliding mask</span>
+          <span id="status" role="status">Preparing preview</span>
+        </figcaption>
+      </figure>
+
+      <div class="controls" id="controls">
+        <div class="playback">
+          <label class="treatment-label" for="treatment">Treatment
+            <select id="treatment">
+              <option value="mesh" selected>Deformed mesh (round 4)</option>
+              <option value="mask">Selector mask (rounds 1–2)</option>
+            </select>
+          </label>
+          <button id="footage-toggle" type="button" disabled>Pause footage</button>
+          <output id="m-status" class="status-line" aria-live="off">solving…</output>
+        </div>
+        <div id="legacy-controls" hidden>
+        <div class="playback">
+          <button id="mask-toggle" type="button" disabled>Hold mask</button>
+          <label class="view-label" for="view">View
+            <select id="view">
+              <option value="0">Clips</option>
+              <option value="1">Grayscale mask</option>
+              <option value="2">Clip colors</option>
+            </select>
+          </label>
+          <label class="check"><input id="point-text" type="checkbox" /> Point-by-point text</label>
+          <label class="topology-label" for="point-topology">Point topology
+            <select id="point-topology" disabled>
+              <option value="contour-faces" selected>Contour face bridges (current)</option>
+              <option value="edge-splits">Edge splits only</option>
+              <option value="lattice-tessellation">Lattice tessellation</option>
+              <option value="pure-lattice">Pure lattice conforming (v2)</option>
+            </select>
+          </label>
+        </div>
+        <div class="timeline-row">
+          <label for="timeline">Mask position</label>
+          <input id="timeline" type="range" min="0" max="12" value="0" step="0.01" disabled />
+          <output id="time" for="timeline" aria-live="off">0.0 / 12.0s</output>
+          <label class="speed-label" for="speed">Speed
+            <select id="speed" disabled>
+              <option value="0.5">½×</option>
+              <option value="1" selected>1×</option>
+              <option value="1.5">1½×</option>
+              <option value="2">2×</option>
+            </select>
+          </label>
+        </div>
+        <div class="piece-controls" id="piece-controls">
+          <label for="density">Clip density</label>
+          <input id="density" type="range" min="12" max="96" value="12" step="4" />
+          <output id="density-value" for="density">12 pieces</output>
+          <label for="fluidity">Edge fluidity</label>
+          <input id="fluidity" type="range" min="0" max="100" value="0" step="1" />
+          <output id="fluidity-value" for="fluidity">0%</output>
+        </div>
+        <div class="copy-controls" id="copy-controls">
+          <label for="copies">Copies / source</label>
+          <input id="copies" type="range" min="1" max="12" value="1" step="1" />
+          <output id="copies-value" for="copies">1 copy / source</output>
+          <span class="points-note">inserted mesh faces</span>
+        </div>
+        </div>
+        <div id="mesh-controls" class="mesh">
+          <div class="mesh-bar">
+            <label for="m-preset">Preset</label>
+            <select id="m-preset">
+              <option value="custom" selected>Custom</option>
+              <option value="faithful-g-single">Faithful G · single cloth</option>
+              <option value="fixed-jumble">Fixed jumble · page default</option>
+              <option value="origin-commit">Origin commit · ground is the project</option>
+              <option value="origin-squeeze">Origin squeeze · clips compress away</option>
+              <option value="origin-push">Origin push · far to near</option>
+              <option value="family-hybrid">Family hybrid · round 4</option>
+            </select>
+            <label for="m-sequence">Projects</label>
+            <select id="m-sequence"><option value="single">One project</option><option value="duo" selected>Yope3D → SpinStack</option></select>
+            <output id="m-project-out">Yope3D</output>
+            <button id="m-reset" type="button">Reset all</button>
+            <output id="m-changed-out" class="changed-out">all defaults</output>
+          </div>
+
+          <div class="primary">
+            <div class="row"><label for="m-text">Text</label><input id="m-text" type="text" value="Yope3D" spellcheck="false" autocomplete="off" /><output id="m-text-out">6 chars</output></div>
+            <div class="row"><label for="m-cols">Columns</label><input id="m-cols" type="range" min="24" max="176" step="4" value="88" /><output id="m-cols-out">88 cells</output></div>
+            <div class="row"><label for="m-algo">Algorithm</label><select id="m-algo"><option value="settle" selected>F · settle on the field</option><option value="warp">G · harmonic warp</option></select><output id="m-algo-out">F</output></div>
+            <div class="row"><label for="m-strength">Shading</label><div class="marked"><input id="m-strength" type="range" min="0" max="1.8" step="0.01" value="0.55" /><span class="window" aria-hidden="true"></span></div><output id="m-strength-out">0.55</output></div>
+            <div class="row"><label for="m-view">View</label><select id="m-view"><option value="0" selected>Footage</option><option value="1">Wireframe (acceptance test)</option><option value="2">Displacement heat map</option><option value="3">Unclamped determinant</option><option value="4">Clamped ratio</option><option value="5">Final multiplier</option><option value="6">Invalid cells</option><option value="7">Clip families</option></select><output id="m-view-out">textured mesh</output></div>
+            <p class="note" id="m-density-note">3.4 cells per stroke</p>
+            <p class="note" id="m-fold-note">folds 0.0%</p>
+          </div>
+
+          <div class="transport" id="m-transport">
+            <div class="transport-line">
+              <button id="m-play" type="button">Hold cycle</button>
+              <input id="m-time" type="range" min="0" max="12.5" step="0.01" value="0" />
+              <output id="m-time-out">0.0 s</output>
+            </div>
+            <div class="row amp-row" id="m-amp-row">
+              <label class="check" for="m-amp-auto"><input id="m-amp-auto" type="checkbox" checked /> Auto amplitude</label>
+              <input id="m-amp" type="range" min="0" max="1" step="0.01" value="1" disabled />
+              <output id="m-amp-out">auto 0.00</output>
+            </div>
+            <canvas id="m-curve" width="1040" height="150" aria-label="Amplitude and strength curves over the loop, with a playhead"></canvas>
+          </div>
+
+          <div class="panels">
+            <details>
+              <summary>Attenuation cycle<span class="badge" aria-hidden="true"></span></summary>
+              <div class="rows">
+                <div class="row"><label for="m-idle">Idle</label><input id="m-idle" type="range" min="0" max="6" step="0.1" value="2" /><output id="m-idle-out">2.0 s</output></div>
+                <div class="row"><label for="m-settle">Settle</label><input id="m-settle" type="range" min="1" max="10" step="0.1" value="4.5" /><output id="m-settle-out">4.5 s</output></div>
+                <div class="row"><label for="m-hold">Hold</label><input id="m-hold" type="range" min="0" max="8" step="0.1" value="3" /><output id="m-hold-out">3.0 s</output></div>
+                <div class="row"><label for="m-release">Release</label><input id="m-release" type="range" min="1" max="10" step="0.1" value="3" /><output id="m-release-out">3.0 s</output></div>
+                <div class="row"><label for="m-release-shape">Release shape</label><select id="m-release-shape"><option value="disperse" selected>Disperse (strength first)</option><option value="rewind">Rewind (symmetric)</option><option value="asymmetric">Early fade (45% of release)</option></select><output id="m-loop-out">12.5 s loop</output></div>
+              </div>
+            </details>
+
+            <details>
+              <summary>Word placement<span class="badge" aria-hidden="true"></span></summary>
+              <div class="rows">
+                <div class="row amp-row" id="m-font-row"><label class="check" for="m-font-auto"><input id="m-font-auto" type="checkbox" /> Auto font size</label><input id="m-font" type="range" min="120" max="320" step="2" value="240" /><output id="m-font-out">240 px</output></div>
+                <p class="note">Auto fits the word's ink box to 0.80 of the canvas width and 0.32 of its height, the probe's own <code>render_word</code> rule, so a long word shrinks and a short one grows instead of running off the frame. Height is part of the test on purpose: fitting on width alone lets a two-character word grow taller than the frame.</p>
+                <div class="row"><label for="m-offx">Offset x</label><input id="m-offx" type="range" min="-400" max="400" step="2" value="0" /><output id="m-offx-out">0 px</output></div>
+                <div class="row"><label for="m-offy">Offset y</label><input id="m-offy" type="range" min="-240" max="240" step="2" value="0" /><output id="m-offy-out">0 px</output></div>
+                <div class="row"><label class="check" for="m-drift"><input id="m-drift" type="checkbox" /> Drift</label><input id="m-drift-amt" type="range" min="0" max="240" step="4" value="60" /><output id="m-drift-out">±60 px</output></div>
+              </div>
+            </details>
+
+            <details>
+              <summary>Deformation<span class="badge" aria-hidden="true"></span></summary>
+              <div class="rows">
+                <div class="row"><label for="m-correspondence">G correspondence</label><select id="m-correspondence"><option value="offset" selected>Offset contour · legacy</option><option value="late-g-lens">Late G · scale .82 / rot 25°</option></select><output id="m-correspondence-out">unused by F</output></div>
+                <div class="row"><label for="m-gain" id="m-gain-label">Gain (attraction)</label><input id="m-gain" type="range" min="0.1" max="2" step="0.01" value="1" /><output id="m-gain-out">1.00 · k 6.0</output></div>
+                <div class="row"><label for="m-band">Capture band</label><input id="m-band" type="range" min="0.4" max="1.8" step="0.01" value="0.85" /><output id="m-band-out">0.85 cells</output></div>
+                <div class="row"><label for="m-spread">Spread</label><input id="m-spread" type="range" min="0" max="3" step="0.05" value="1" /><output id="m-spread-out">1.00 strokes</output></div>
+                <div class="row"><label for="m-breath">Breathing</label><input id="m-breath" type="range" min="0" max="1" step="0.01" value="0.3" /><output id="m-breath-out">0.30 cells</output></div>
+                <div class="row"><label for="m-breath-speed">Breath speed</label><input id="m-breath-speed" type="range" min="0.25" max="2" step="0.05" value="1" /><output id="m-breath-out2">1.00×</output></div>
+              </div>
+            </details>
+
+            <details>
+              <summary>Shading detail<span class="badge" aria-hidden="true"></span></summary>
+              <div class="rows">
+                <div class="row"><label for="m-schedule">Schedule</label><select id="m-schedule"><option value="overshoot" selected>Overshoot</option><option value="const">Constant</option><option value="inverse">Inverse</option><option value="lead">Lead</option><option value="lag">Lag</option></select><output id="m-sched-out">s 0.55</output></div>
+                <div class="row"><label for="m-flare-peak">Flare peak</label><input id="m-flare-peak" type="range" min="0.55" max="2" step="0.01" value="1.7" /><output id="m-flare-peak-out">1.70</output></div>
+                <div class="row"><label for="m-flare-centre">Flare centre</label><input id="m-flare-centre" type="range" min="0.2" max="0.8" step="0.01" value="0.45" /><output id="m-flare-centre-out">a 0.45</output></div>
+                <div class="row"><label for="m-flare-width">Flare width</label><input id="m-flare-width" type="range" min="0.1" max="0.5" step="0.01" value="0.28" /><output id="m-flare-width-out">0.28</output></div>
+                <div class="row"><label for="m-polarity">Polarity</label><select id="m-polarity"><option value="compression-bright">+ · compression bright</option><option value="compression-dark" selected>− · compression dark</option></select><output id="m-polarity-out">F reads debossed</output></div>
+                <div class="row"><label for="m-smooth">Smoothing</label><input id="m-smooth" type="range" min="0" max="8" step="1" value="2" /><output id="m-smooth-out">2 passes</output></div>
+                <div class="row"><label for="m-jumble-shading">In clip jumble</label><select id="m-jumble-shading"><option value="on" selected>On</option><option value="off">Off</option></select><output id="m-jumble-shading-out">stacks</output></div>
+                <div class="row checks"><label class="check" for="m-luma"><input id="m-luma" type="checkbox" /> Luma adaptive</label><label class="check" for="m-clamp"><input id="m-clamp" type="checkbox" /> Clamp idle tail</label></div>
+                <p class="note">Luma adaptive was measured dead on true black: no exponent lifts a zero pixel. It still helps on dark-but-not-black footage.</p>
+              </div>
+            </details>
+
+            <details>
+              <summary>Footage<span class="badge" aria-hidden="true"></span></summary>
+              <div class="rows">
+                <div class="row"><label for="m-footage">Mode</label><select id="m-footage"><option value="jumble" selected>Fixed mixed jumble</option><option value="single">Single clip</option></select><output id="m-footage-out">fixed mix</output></div>
+                <div class="row"><label for="m-clip">Clip</label><select id="m-clip"><option value="0" selected>Yope3D cloth</option><option value="1">SpinStack</option><option value="2">Digits</option><option value="3">Gravity</option></select><output id="m-clip-out">cloth</output></div>
+                <div class="row checks"><label class="check" for="m-commit"><input id="m-commit" type="checkbox" /> Commit to families (round 4)</label></div>
+                <div class="row"><label for="m-commit-transition">Commit change</label><select id="m-commit-transition" disabled><option value="cut" selected>Switch clips</option><option value="squeeze">Squeeze outgoing clips</option><option value="push">Push far to near</option></select><output id="m-commit-transition-out">needs commit</output></div>
+                <div class="row"><label for="m-idle-field">Idle field</label><select id="m-idle-field" disabled><option value="jumble" selected>Jumble</option><option value="single">Single clip</option></select><output id="m-idle-field-out">collage</output></div>
+                <div class="row"><label for="m-stagger">Commit stagger</label><input id="m-stagger" type="range" min="0" max="1" step="0.01" value="0.72" disabled /><output id="m-stagger-out">0.72</output></div>
+                <div class="row checks"><label class="check" for="m-family"><input id="m-family" type="checkbox" checked disabled /> Family split</label></div>
+                <div class="row"><label for="m-family-mode">Split by</label><select id="m-family-mode" disabled><option value="luminance" selected>Mean luminance · round 4</option><option value="origin">Origin clip · from the Clip select</option><option value="origin-auto">Origin clip · matched from the word</option></select><output id="m-family-mode-out">needs commit</output></div>
+                <p class="note">Without commitment the palette is fixed for the whole cycle, so idle and hold draw the identical mix and only the geometry animates. The luminance split goes near black at the hold on the current four clips.</p>
+                <p class="note">Origin split ignores luminance: the ground commits to the clip chosen above — the project the word names — and the other three commit away out of it, into the letters. The home clip is excluded from the letter pool, because a letter cell drawing the same clip as the ground behind it would be a hole in the word.</p>
+                <p class="note">Origin push settles the word's clips early, then moves the surrounding clips away from far to near as the field strengthens. The last ones leave at full strength. The core stays unchanged through the push and hold while its footage breathes. Release returns the original collage.</p>
+                <p class="note">Matched from the word compares the Text field against each clip's name and its aliases, and uses the winner as the ground, so changing the word changes the project. Greek letters fold to their names first, so a word typed with a real β still finds a clip aliased <code>beta-VAE</code>. It falls back to the Clip select when nothing matches, and the readout always names the clip that actually won.</p>
+              </div>
+            </details>
+
+            <details>
+              <summary>Notes<span class="badge" aria-hidden="true"></span></summary>
+              <div class="rows">
+                <p class="note">The wireframe view must spell the word from edge arrangement alone, with no highlight colour. That is the round-three acceptance test.</p>
+                <p class="note">Cells per stroke is the governing figure, not the column count. Below the floor for the active mode the word stops resolving, and underspecified looks identical to broken.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <div class="notes" id="legacy-notes">
+        <p>Scrub the mask to move the lettering. The clips keep their position on the screen.</p>
+        <div class="legend" aria-label="Gray levels select these clips">
+          {clips.map((clip) => <span><i style={`--gray: ${clip.gray}`} aria-hidden="true"></i>{clip.name}</span>)}
+        </div>
+        <p class="scope" id="scope-note">The selector mask is generated from the four-point clip field. These defaults reproduce the original static 12-piece mask; raise density, edge fluidity, or Copies / source to alter that same mask. Toggle Point-by-point text to bake a replayable mask animation, then compare the preserved contour-face bridge with the sibling lattice-topology variants.</p>
+        <a href="/media/showcase-test/letter-mask.webm" target="_blank" rel="noopener">Open the mask movie ↗</a>
+      </div>
+      <noscript><p>This interactive test needs JavaScript. You can still open the mask movie above.</p></noscript>
+      <div hidden id="media">
+        <video id="mask-video" muted loop playsinline preload="auto" poster="/media/showcase-test/letter-mask.png">
+          <source src="/media/showcase-test/letter-mask.webm" type="video/webm" />
+          <source src="/media/showcase-test/letter-mask.mp4" type="video/mp4" />
+        </video>
+        <canvas id="generated-mask" width="1280" height="720" aria-hidden="true"></canvas>
+        {clips.map((clip) => <video data-clip data-name={clip.name} data-aliases={clip.aliases.join('|')} src={clip.src} muted loop playsinline preload="auto"></video>)}
+      </div>
+    </main>
+    <script>
+      import { startShowcaseTest } from '../scripts/showcase-test';
+      startShowcaseTest();
+    </script>
+  </body>
+</html>
+
+<style>
+  :global(*) { box-sizing: border-box; }
+  :global(body) { margin: 0; background: #0b0d10; color: #e6e9ee; font: 15px/1.5 system-ui, sans-serif; }
+  :global(button), :global(select), :global(input) { font: inherit; }
+  :global(a) { color: #aab3bf; text-underline-offset: 4px; }
+  :global(a:hover) { color: #fff; }
+  :global(:focus-visible) { outline: 2px solid #e2df8f; outline-offset: 4px; }
+  main { width: min(1440px, 100%); margin: auto; padding: 28px 32px 48px; }
+  header { margin: 0 0 24px; }
+  header a { font-size: 13px; }
+  h1 { font-size: 26px; font-weight: 550; letter-spacing: -.035em; margin: 24px 0 4px; }
+  header p { color: #aab3bf; margin: 0; }
+  figure { margin: 0; }
+  .stage { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #16191e; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+  canvas[hidden] { display: none; }
+  .stage canvas { position: absolute; inset: 0; }
+  .stage #showcase-mesh-debug { pointer-events: none; }
+  .stage #showcase-mesh-next-debug { pointer-events: none; }
+  #loading { position: absolute; inset: 0; display: grid; place-items: center; padding: 28px; text-align: center; margin: 0; background: #16191e; color: #aab3bf; }
+  #loading[hidden] { display: none; }
+  figcaption { display: flex; justify-content: space-between; gap: 16px; color: #9aa3b0; font-size: 12px; padding: 10px 0 18px; }
+  .controls { border-top: 1px solid #30343a; border-bottom: 1px solid #30343a; padding: 18px 0; display: grid; gap: 20px; }
+  .playback { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+  button, select { color: #e6e9ee; border: 1px solid #444950; border-radius: 3px; background: #15181c; min-height: 40px; padding: 7px 12px; cursor: pointer; }
+  button:hover, select:hover { border-color: #9aa3b0; }
+  button:disabled { cursor: wait; opacity: .5; }
+  #mask-toggle { min-width: 124px; }
+  #footage-toggle { min-width: 133px; }
+  .view-label, .speed-label { display: flex; align-items: center; gap: 10px; }
+  .view-label { margin-left: auto; }
+  .topology-label { display: flex; align-items: center; gap: 10px; }
+  label { color: #b3bbc6; font-size: 13px; }
+  .check { display: flex; gap: 7px; align-items: center; min-height: 40px; cursor: pointer; }
+  input { accent-color: #e2df8f; }
+  .timeline-row { display: grid; align-items: center; gap: 16px; grid-template-columns: auto 1fr auto auto; }
+  #timeline { width: 100%; min-width: 0; cursor: ew-resize; }
+  output { color: #aab3bf; font: 12px/1.5 ui-monospace, monospace; min-width: 12ch; }
+  .piece-controls { display: grid; grid-template-columns: auto minmax(120px, 1fr) auto auto minmax(120px, 1fr) auto auto; align-items: center; gap: 10px 14px; }
+  .piece-controls input { width: 100%; min-width: 0; cursor: ew-resize; }
+  .copy-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+  .copy-controls input { flex: 1 1 220px; min-width: 120px; cursor: ew-resize; }
+  .copy-controls .points-note { margin-left: auto; }
+  .points-note { color: #828b98; font-size: 12px; white-space: nowrap; }
+  .notes { padding-top: 18px; font-size: 13px; color: #aab3bf; }
+  .notes p { margin: 0 0 14px; }
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 14px; }
+  .legend span { display: flex; align-items: center; gap: 7px; }
+  .legend i { width: 12px; height: 12px; background: var(--gray); border: 1px solid #555; }
+  .scope { color: #828b98; }
+  .treatment-label { display: flex; align-items: center; gap: 10px; }
+  .status-line { margin-left: auto; min-width: 0; text-align: right; color: #9aa3b0; }
+  #legacy-controls[hidden], #mesh-controls[hidden] { display: none; }
+  #legacy-controls { display: grid; gap: 20px; }
+  .mesh { display: grid; gap: 18px; align-items: start; }
+
+  /* Preset bar. A named preset collapses a dozen dials into one choice, and
+     the readout says how far the panel has drifted from its defaults. */
+  .mesh-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; }
+  .mesh .mesh-bar select { width: auto; min-width: 15rem; }
+  .changed-out { margin-left: auto; min-width: 0; text-align: right; }
+  .changed-out.warn { color: #e0a35c; }
+
+  /* The five controls worth driving stay visible; everything else collapses. */
+  .primary { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px 34px; }
+  .primary > .note { grid-column: 1 / -1; }
+
+  .transport { display: grid; gap: 8px; }
+  .transport-line { display: grid; grid-template-columns: auto minmax(60px, 1fr) 11ch; gap: 10px; align-items: center; }
+  .transport-line input { width: 100%; min-width: 0; cursor: ew-resize; }
+  #m-play { min-width: 104px; }
+  /* Manual amplitude ignores the cycle entirely. That state cost real
+     debugging time when it was silent, so it announces itself. */
+  .amp-row.manual { background: #2a1f14; box-shadow: 0 0 0 1px #6d4a24; border-radius: 3px; padding: 4px 8px; margin: -4px -8px; }
+  .amp-row.manual output { color: #e0a35c; }
+
+  .panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 10px 34px; align-items: start; }
+  .panels details { border: 1px solid #262a30; border-radius: 3px; background: #101317; }
+  .panels details[open] { border-color: #3a3f47; }
+  .panels summary { cursor: pointer; padding: 9px 12px; font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #7f8894; display: flex; align-items: center; gap: 8px; }
+  .panels summary:hover { color: #b3bbc6; }
+  .panels details[open] summary { border-bottom: 1px solid #22262b; }
+  .panels .rows { display: grid; gap: 7px; padding: 10px 12px 12px; }
+  .badge:empty { display: none; }
+  .badge { margin-left: auto; min-width: 18px; padding: 1px 6px; border-radius: 9px; background: #6d4a24; color: #f0cfa0; font: 10px/1.6 ui-monospace, monospace; letter-spacing: 0; text-align: center; }
+
+  /* A row that no longer holds its default is marked, so silent drift is
+     impossible to mistake for a bug in the effect itself. */
+  .mesh .row.changed > label { color: #e2df8f; }
+  .mesh .row.changed > label::after { content: " •"; color: #e2df8f; }
+  .mesh .row { display: grid; grid-template-columns: 104px minmax(60px, 1fr) 11ch; gap: 10px; align-items: center; }
+  .mesh .row.checks { grid-template-columns: auto auto; justify-content: start; gap: 18px; }
+  .mesh input[type="range"] { width: 100%; min-width: 0; cursor: ew-resize; }
+  .mesh input[type="text"] { width: 100%; min-width: 0; background: #15181c; color: #e6e9ee; border: 1px solid #444950; border-radius: 3px; min-height: 32px; padding: 4px 8px; }
+  .mesh select { min-height: 32px; padding: 3px 8px; width: 100%; min-width: 0; }
+  .mesh button { min-height: 32px; padding: 3px 10px; }
+  .mesh output { color: #9aa3b0; font: 11px/1.4 ui-monospace, monospace; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mesh .note { margin: 2px 0 0; color: #7f8894; font-size: 12px; }
+  .mesh .note.warn { color: #e0a35c; }
+  .mesh .marked { position: relative; display: grid; }
+  .mesh .window { position: absolute; left: 19.4%; width: 22.3%; bottom: -2px; height: 2px; background: #6f9f6a; pointer-events: none; }
+  #m-curve { width: 100%; height: auto; background: #12151a; border: 1px solid #262a30; border-radius: 3px; margin-top: 4px; }
+  @media (max-width: 650px) {
+    main { padding: 20px 16px 32px; }
+    header { margin-bottom: 18px; }
+    h1 { font-size: 23px; }
+    header p { font-size: 13px; }
+    .view-label { margin-left: 0; }
+    .topology-label { width: 100%; }
+    .playback { gap: 10px 12px; }
+    .timeline-row { grid-template-columns: 1fr auto; gap: 10px 14px; }
+    #timeline { grid-column: 1 / -1; grid-row: 2; min-height: 30px; }
+    .speed-label { grid-column: 1 / -1; }
+    .piece-controls { grid-template-columns: auto 1fr auto; }
+    .piece-controls label:nth-of-type(2) { grid-column: 1; }
+    .piece-controls input:nth-of-type(2) { grid-column: 2; }
+    .piece-controls output:nth-of-type(2) { grid-column: 3; }
+    .copy-controls .points-note { margin-left: 0; }
+    figcaption { font-size: 11px; }
+  }
+</style>

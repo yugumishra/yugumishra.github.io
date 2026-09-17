@@ -30,7 +30,19 @@ const img = (src: string | null | undefined): ImageMetadata | null => {
   return byName.get(name) ?? null;
 };
 
+// Add screenshots to a project's `stills` array in content.json. Files go in
+// src/assets/img so Astro can optimize them; captions appear in the expanded card.
+type ProjectStill = { img: string; alt: string; caption: string; contain?: boolean };
+const projectStills = (stills: ProjectStill[]) =>
+  stills.map((still) => {
+    const image = img(still.img);
+    if (!image) throw new Error(`Project still not found: ${still.img}`);
+    return { image, alt: still.alt, caption: still.caption, contain: still.contain };
+  });
+
 const poster = byName.get('yope_cloth_poster.jpg')!;
+const glyphPoster = byName.get('glyph_poster.jpg')!;
+const glyphClassifierPoster = byName.get('glyph_classifier_poster.jpg')!;
 
 // PDFs moved from assets/papers/ to public/papers/, so the extracted hrefs
 // (which preserve the legacy paths) need remapping to their served location.
@@ -49,12 +61,43 @@ const yopeBullets = [
   f['Tooling & tests'][2],
 ];
 
-// Per-project media wiring, keyed by the original card title.
+// Per-project media wiring, keyed by the original card title. `video` carries
+// its own sources: two projects ship video now, so a boolean would have played
+// the wrong clip.
+type CardVideo = { mp4: string; webm: string; poster: ImageMetadata };
 const MEDIA: Record<
   string,
-  { gif?: string; video?: boolean; contain?: boolean }
+  {
+    gif?: string;
+    video?: CardVideo;
+    /** Second clip, revealed under the first when the card expands. */
+    syncedVideo?: CardVideo & { caption: string };
+    contain?: boolean;
+  }
 > = {
-  Yope3D: { video: true },
+  Yope3D: {
+    video: {
+      mp4: '/media/yope_cloth_b.mp4',
+      webm: '/media/yope_cloth_b.webm',
+      poster,
+    },
+  },
+  // Both clips are the same take: gesture_test.bin [19.05s, 28.05s], 270
+  // frames at 30fps, cut frame-aligned so they stay in sync across loops.
+  GlyphInterpreter: {
+    video: {
+      mp4: '/media/glyph_demo.mp4',
+      webm: '/media/glyph_demo.webm',
+      poster: glyphPoster,
+    },
+    syncedVideo: {
+      mp4: '/media/glyph_classifier.mp4',
+      webm: '/media/glyph_classifier.webm',
+      poster: glyphClassifierPoster,
+      caption:
+        'The same take, scored frame by frame: distance to the nearest enrolled gesture against the threshold (dashed).',
+    },
+  },
   'MNIST Beta VAE': { gif: '/media/digit_animation.gif' },
   SpinStack: { gif: '/media/spinstack_demo.gif' },
   'Java AI': { contain: true },
@@ -62,8 +105,11 @@ const MEDIA: Record<
   '3D Gravity Simulator': { gif: '/media/3d_grav_b_3.gif' },
 };
 
+// Full-width cards, rendered above the grid.
+const FEATURED = ['Yope3D'];
 const yopeProject = projects.find((project) => project.title === 'Yope3D');
 const projectOrder = [
+  'GlyphInterpreter',
   'SpinStack',
   'MNIST Beta VAE',
   'Java AI',
@@ -71,7 +117,7 @@ const projectOrder = [
   'Polynomial Root Solver',
 ];
 const otherProjects = projects
-  .filter((project) => project.title !== 'Yope3D')
+  .filter((project) => !FEATURED.includes(project.title))
   .sort((a, b) => projectOrder.indexOf(a.title) - projectOrder.indexOf(b.title));
 
 // The phone number is deliberately not published; it was also purged from git
@@ -216,11 +262,7 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
             ariaLabel={yopeProject.aria_label}
             image={null}
             imageAlt="Yope3D cloth simulation running in the engine"
-            video={{
-              mp4: '/media/yope_cloth_b.mp4',
-              webm: '/media/yope_cloth_b.webm',
-              poster,
-            }}
+            video={MEDIA.Yope3D.video}
             featured
             status={yope.status}
             technologies={['C++20', 'Vulkan', 'Python', 'CMake', 'Catch2']}
@@ -228,6 +270,7 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
           />
         )
       }
+
 
       <div class="grid-3 project-grid">
         {
@@ -244,17 +287,11 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
                 image={media.gif || media.video ? null : img(p.img)}
                 imageAlt={p.img_alt ?? p.title}
                 gif={media.gif ?? null}
-                video={
-                  media.video
-                    ? {
-                        mp4: '/media/yope_cloth_b.mp4',
-                        webm: '/media/yope_cloth_b.webm',
-                        poster,
-                      }
-                    : null
-                }
+                video={media.video ?? null}
+                syncedVideo={media.syncedVideo ?? null}
                 contain={media.contain ?? false}
                 interactive={p.title === 'MNIST Beta VAE'}
+                stills={projectStills(p.stills as ProjectStill[])}
               />
             );
           })
@@ -414,9 +451,163 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
             i++;
           }
         }
-        setTimeout(tick, deleting ? 40 : 80);
+        setTimeout(tick, deleting ? 30 : 60);
       };
       tick();
+    }
+  }
+</script>
+
+<script>
+  const grid = document.querySelector<HTMLElement>('.project-grid');
+  if (grid) {
+    const cards = Array.from(grid.querySelectorAll<HTMLElement>('.project-expandable'));
+    const originalOrder = [...cards];
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let selectionRun = 0;
+
+    // Animate both the selected card and the cards whose rows move around it.
+    // The DOM order follows the visual order, so keyboard navigation stays sane.
+    const rearrange = (selected: HTMLElement | null) => {
+      const run = ++selectionRun;
+      cards.forEach((card) => card.getAnimations().forEach((animation) => animation.cancel()));
+      const before = new Map(cards.map((card) => [card, card.getBoundingClientRect()]));
+      cards.forEach((card) => {
+        const expanded = card === selected;
+        card.classList.toggle('is-expanded', expanded);
+        clipPairs.get(card)?.(expanded);
+        const toggle = card.querySelector<HTMLButtonElement>('.project-detail-toggle');
+        const detail = card.querySelector<HTMLElement>('.project-detail');
+        toggle?.setAttribute('aria-expanded', String(expanded));
+        if (toggle) toggle.querySelector('span')!.textContent = expanded ? 'Show less' : 'In detail';
+        if (detail) detail.hidden = !expanded;
+        if (!expanded) {
+          card.dataset.slide = '0';
+          card.querySelectorAll<HTMLElement>('.media-slide').forEach((slide, index) => { slide.hidden = index !== 0; });
+          const controls = card.querySelector<HTMLElement>('.media-controls');
+          if (controls) controls.hidden = true;
+          const count = card.querySelector<HTMLElement>('.media-count');
+          if (count) count.textContent = `1 / ${card.querySelectorAll('.media-slide').length}`;
+        } else {
+          const controls = card.querySelector<HTMLElement>('.media-controls');
+          if (controls) controls.hidden = false;
+        }
+      });
+
+      if (selected) grid.prepend(selected);
+      else originalOrder.forEach((card) => grid.append(card));
+      selected?.dispatchEvent(new Event('project:expanded'));
+
+      const animations: Animation[] = [];
+      if (reducedMotion.matches) {
+        selected?.scrollIntoView({ behavior: 'auto', block: 'start' });
+        return;
+      }
+      cards.forEach((card) => {
+        const first = before.get(card)!;
+        const last = card.getBoundingClientRect();
+        if (!first.width || !last.width) return;
+        const dx = first.left - last.left;
+        const dy = first.top - last.top;
+        const sx = first.width / last.width;
+        const sy = first.height / last.height;
+        if (Math.abs(dx) + Math.abs(dy) + Math.abs(sx - 1) + Math.abs(sy - 1) < 0.01) return;
+        animations.push(card.animate(
+          [
+            { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+            { transform: 'translate(0, 0) scale(1, 1)' },
+          ],
+          { duration: 420, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+        ));
+      });
+      if (selected) {
+        void Promise.allSettled(animations.map((animation) => animation.finished)).then(() => {
+          if (run === selectionRun) selected.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+    };
+
+    // A card can carry a second clip of the same take, revealed on expand. The
+    // files are cut to the same frame range, duration and rate, so they only
+    // need nudging back together when decoding jitters — but `loop` restarts
+    // each element independently, so the comparison has to wrap around the
+    // duration or every loop boundary reads as a full-length drift.
+    const pairClips = (card: HTMLElement) => {
+      const primary = card.querySelector<HTMLVideoElement>('[data-sync-primary]');
+      const secondary = card.querySelector<HTMLVideoElement>('[data-sync-secondary]');
+      if (!primary || !secondary) return () => {};
+
+      const TOLERANCE = 0.08;
+      let timer = 0;
+
+      const realign = () => {
+        const span = primary.duration;
+        if (!span || Number.isNaN(span)) return;
+        let delta = secondary.currentTime - primary.currentTime;
+        if (delta > span / 2) delta -= span;
+        if (delta < -span / 2) delta += span;
+        if (Math.abs(delta) > TOLERANCE) secondary.currentTime = primary.currentTime;
+      };
+
+      return (expanded: boolean) => {
+        window.clearInterval(timer);
+        if (!expanded) {
+          secondary.pause();
+          return;
+        }
+        secondary.currentTime = primary.currentTime;
+        void secondary.play().catch(() => {});
+        realign();
+        timer = window.setInterval(realign, 500);
+      };
+    };
+
+    const clipPairs = new Map(cards.map((card) => [card, pairClips(card)]));
+
+    cards.forEach((card) => {
+      card.querySelector<HTMLButtonElement>('.project-detail-toggle')?.addEventListener('click', () => {
+        rearrange(card.classList.contains('is-expanded') ? null : card);
+      });
+      card.querySelector<HTMLButtonElement>('.mnist-open')?.addEventListener('click', () => {
+        rearrange(card);
+      });
+
+      const slides = Array.from(card.querySelectorAll<HTMLElement>('.media-slide'));
+      if (slides.length < 2) return;
+      const count = card.querySelector<HTMLElement>('.media-count');
+      card.dataset.slide = '0';
+      const show = (next: number) => {
+        const current = (next + slides.length) % slides.length;
+        card.dataset.slide = String(current);
+        slides.forEach((slide, index) => { slide.hidden = index !== current; });
+        if (count) count.textContent = `${current + 1} / ${slides.length}`;
+      };
+      card.querySelector('.media-prev')?.addEventListener('click', () => show(Number(card.dataset.slide) - 1));
+      card.querySelector('.media-next')?.addEventListener('click', () => show(Number(card.dataset.slide) + 1));
+
+      const media = card.querySelector<HTMLElement>('.media');
+      let touchX: number | null = null;
+      media?.addEventListener('touchstart', (event) => {
+        touchX = event.changedTouches[0]?.screenX ?? null;
+      }, { passive: true });
+      media?.addEventListener('touchend', (event) => {
+        if (touchX === null || !card.classList.contains('is-expanded')) return;
+        const delta = (event.changedTouches[0]?.screenX ?? touchX) - touchX;
+        if (Math.abs(delta) > 45) show(Number(card.dataset.slide) + (delta < 0 ? 1 : -1));
+        touchX = null;
+      }, { passive: true });
+    });
+
+    // The hero's Fun Stuff link still opens the interactive MNIST project.
+    document.querySelector<HTMLAnchorElement>('a[href="#mnist-digit-drawer"]')?.addEventListener('click', (event) => {
+      const mnist = grid.querySelector<HTMLElement>('#mnist-digit-drawer');
+      if (!mnist) return;
+      event.preventDefault();
+      rearrange(mnist);
+    });
+    if (window.location.hash === '#mnist-digit-drawer') {
+      const mnist = grid.querySelector<HTMLElement>('#mnist-digit-drawer');
+      if (mnist) rearrange(mnist);
     }
   }
 </script>

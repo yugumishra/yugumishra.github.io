@@ -436,6 +436,10 @@ main {
 }
 .project-grid {
   margin-top: 1rem;
+  overflow-anchor: none;
+}
+.project-grid .project {
+  scroll-margin-top: 1rem;
 }
 
 /* ---------- papers ---------- */
@@ -498,10 +502,21 @@ main {
   border-color: var(--accent);
 }
 .project .media {
+  position: relative;
   height: 180px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   overflow: hidden;
+}
+.project .media-slide {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+.project .media-slide[hidden],
+.project .media-controls[hidden],
+.project .project-detail[hidden] {
+  display: none;
 }
 .project .media img,
 .project .media video {
@@ -510,13 +525,66 @@ main {
   object-fit: cover;
   display: block;
 }
+.project .media-slide.contain {
+  background: var(--plate);
+}
+.project .media-slide.contain img {
+  object-fit: contain;
+  padding: 1rem;
+}
+.project .media-slide figcaption {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 1rem 1.25rem 0.75rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.82));
+  color: #fff;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+.project .media-controls {
+  position: absolute;
+  inset: 50% 0 auto;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+  padding: 0 0.75rem;
+}
+.project .media-controls button {
+  pointer-events: auto;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: rgba(11, 13, 16, 0.82);
+  color: #fff;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.project .media-controls button:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+.project .media-count {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(11, 13, 16, 0.82);
+  color: #fff;
+  font: 0.72rem var(--font-mono);
+}
 /* "contain" media are diagrams/plots drawn for white (the JavaAI SVG is #000
    line work; the Polynomial plot has a white ground). Rendered GIFs and the
    Yope3D video keep the dark backdrop they were captured against. */
 .project .media.contain {
   background: var(--plate);
 }
-.project .media.contain img {
+.project .media.contain > .media-slide:first-child img {
   object-fit: contain;
   padding: 1rem;
 }
@@ -548,6 +616,78 @@ main {
 .project.featured .body {
   border-left: 1px solid var(--border);
   padding: 1.75rem 1.8rem 1.8rem;
+}
+.project-grid .project.is-expanded {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.9fr);
+}
+.project-grid .project.is-expanded .media {
+  height: auto;
+  min-height: 360px;
+  border-bottom: 0;
+}
+.project-grid .project.is-expanded .media img,
+.project-grid .project.is-expanded .media video {
+  object-fit: contain;
+}
+.project-grid .project.is-expanded .body {
+  border-left: 1px solid var(--border);
+  padding: 1.75rem 1.8rem 1.8rem;
+}
+.project-grid .project.is-expanded h3 {
+  font-size: clamp(1.35rem, 2.2vw, 1.8rem);
+}
+.project-grid .project.is-expanded .blurb {
+  flex: none;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+.project-detail-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: none;
+  color: var(--muted);
+  font: 600 0.78rem var(--font-sans);
+  letter-spacing: 0.12em;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.project-detail-toggle:hover {
+  color: var(--accent);
+}
+.project-detail-toggle .chev {
+  transition: transform 0.25s ease;
+}
+.project-detail-toggle[aria-expanded='true'] .chev {
+  transform: rotate(180deg);
+}
+.project-detail {
+  padding-top: 1rem;
+}
+.project-detail h4 {
+  margin: 0;
+  font-size: 0.85rem;
+}
+.project-detail ul {
+  margin: 0.6rem 0 0;
+  padding-left: 1.15rem;
+}
+.project-detail li {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0.4rem 0;
+}
+.project-detail li b {
+  color: var(--text);
 }
 .project-status {
   margin: 0 0 0.6rem;
@@ -611,7 +751,6 @@ main {
 
 /* ---------- MNIST digit drawer ---------- */
 .mnist-demo {
-  scroll-margin-top: 1rem;
   margin: 0 0 1rem;
   padding: 0.8rem;
   background: var(--bg);
@@ -622,10 +761,43 @@ main {
   margin-bottom: 0.75rem;
 }
 .mnist-demo-copy p {
+  margin: 0 0 1rem;
   color: var(--muted);
   font-size: 0.78rem;
   line-height: 1.45;
+}
+.mnist-demo-copy p:last-child {
   margin: 0;
+}
+.project.is-expanded .mnist-demo {
+  display: none;
+}
+.mnist-open {
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.mnist-workbench {
+  display: none;
+  background: var(--bg);
+}
+.project.is-mnist.is-expanded .media-slide {
+  display: none;
+}
+.project.is-mnist.is-expanded .mnist-workbench {
+  display: block;
+}
+.project.is-mnist.is-expanded .media {
+  aspect-ratio: auto;
+}
+.project.is-mnist.is-expanded .mnist-panel {
+  grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
+  gap: 1.5rem;
+}
+.project.is-mnist.is-expanded .mnist-slider-grid {
+  grid-template-columns: repeat(2, minmax(5rem, 1fr));
+  gap: 0.7rem;
 }
 .mnist-demo-kicker,
 .mnist-dialog-kicker,
@@ -638,34 +810,8 @@ main {
   margin-bottom: 0.3rem !important;
   text-transform: uppercase;
 }
-.mnist-open {
-  width: 100%;
-  padding: 0.45rem 0.75rem;
-  font-size: 0.82rem;
-  cursor: pointer;
-}
-.mnist-open:disabled {
-  cursor: wait;
-  opacity: 0.65;
-}
-.mnist-dialog {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.45);
-  color: var(--text);
-  margin: auto;
-  max-height: min(90vh, 56rem);
-  max-width: none;
-  overflow-y: auto;
-  padding: 0;
-  width: min(58rem, calc(100vw - 2rem));
-}
-.mnist-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.72);
-}
 .mnist-dialog-shell {
-  padding: clamp(1.25rem, 3vw, 2.25rem);
+  padding: clamp(1.25rem, 3vw, 1.8rem);
 }
 .mnist-dialog-header {
   align-items: flex-start;
@@ -689,12 +835,6 @@ main {
 }
 .mnist-dialog-kicker {
   margin-top: 0;
-}
-.mnist-close {
-  cursor: pointer;
-  flex: none;
-  font-size: 0.8rem;
-  padding: 0.42rem 0.8rem;
 }
 .mnist-panel {
   display: grid;
@@ -990,22 +1130,32 @@ footer {
 
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
-  .project.featured {
+  .project.featured,
+  .project-grid .project.is-expanded {
     display: flex;
   }
-  .project.featured .media {
+  .project.featured .media,
+  .project-grid .project.is-expanded .media {
     aspect-ratio: 16 / 9;
     border-bottom: 1px solid var(--border);
     height: auto;
+    min-height: 0;
   }
-  .project.featured .body {
+  .project.featured .body,
+  .project-grid .project.is-expanded .body {
     border-left: 0;
+  }
+  .project.is-mnist.is-expanded .media {
+    aspect-ratio: auto;
   }
   .mnist-slider-grid {
     grid-template-columns: repeat(3, minmax(7rem, 1fr));
   }
 }
 @media (max-width: 900px) {
+  .project-grid .project {
+    scroll-margin-top: 76px;
+  }
   .sidebar {
     display: none;
   }
@@ -1023,12 +1173,9 @@ footer {
   .section {
     scroll-margin-top: 60px;
   }
-  .mnist-demo {
-    scroll-margin-top: 76px;
-  }
 }
 @media (max-width: 700px) {
-  .mnist-panel {
+  .project.is-mnist.is-expanded .mnist-panel {
     grid-template-columns: 1fr;
   }
   .mnist-output canvas {
@@ -1074,4 +1221,45 @@ footer {
     width: min(16rem, 100%);
     margin: 0 auto;
   }
+}
+
+/* ---------- paired clips ----------
+   GlyphInterpreter ships two renders of the same nine seconds: the headset
+   capture and the matplotlib scoring view. Collapsed, only the capture is in
+   flow; expanded, the second stacks beneath it and index.astro keeps their
+   playheads together. Both files are cut to the same frame range and duration,
+   so the pairing survives looping. */
+.project .media-synced {
+  display: none;
+}
+.project.has-synced.is-expanded .media {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+}
+.project.has-synced.is-expanded .media-slide,
+.project.has-synced.is-expanded .media-slide video {
+  height: auto;
+}
+.project.has-synced.is-expanded .media-synced {
+  display: block;
+  margin: 0;
+  border-top: 1px solid var(--border);
+  background: var(--plate);
+}
+.project.has-synced.is-expanded .media-synced video {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  /* Reserve the box before metadata loads: the clip is preload="none", so
+     without this the card grows again after expanding and the FLIP lands
+     on a stale height. Matches the 840x653 render. */
+  aspect-ratio: 840 / 653;
+}
+.project.has-synced.is-expanded .media-synced figcaption {
+  padding: 0.6rem 0.9rem 0.8rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
 }

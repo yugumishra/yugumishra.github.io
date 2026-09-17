@@ -4,69 +4,44 @@ const latentUrl = '/models/mnist-latent.json';
 ---
 
 <div
-  id="mnist-digit-drawer"
-  class="mnist-demo"
+  class="mnist-workbench"
   data-mnist-demo
   data-model-url={modelUrl}
   data-latent-url={latentUrl}
 >
-  <div class="mnist-demo-copy">
-    <p class="mnist-demo-kicker">Interactive model</p>
-    <p>Explore the VAE's 16-dimensional latent space and generate a digit.</p>
-  </div>
-  <button
-    class="button mnist-open"
-    type="button"
-    data-mnist-open
-    aria-expanded="false"
-    aria-controls="mnist-dialog"
-  >
-    Open full-size digit drawer
-  </button>
+  <div class="mnist-dialog-shell">
+    <header class="mnist-dialog-header">
+      <div>
+        <p class="mnist-dialog-kicker">Interactive model · MNIST β-VAE</p>
+        <h4 id="mnist-workbench-title">Explore the latent space</h4>
+        <p>Drag a slider to change the handwriting style and generate a new digit.</p>
+      </div>
+    </header>
 
-  <dialog
-    class="mnist-dialog"
-    id="mnist-dialog"
-    data-mnist-dialog
-    aria-labelledby="mnist-dialog-title"
-  >
-    <div class="mnist-dialog-shell">
-      <header class="mnist-dialog-header">
-        <div>
-          <p class="mnist-dialog-kicker">MNIST β-VAE</p>
-          <h4 id="mnist-dialog-title">Explore the latent space</h4>
-          <p>Drag a slider to change the handwriting style and generate a new digit.</p>
-        </div>
-        <button class="button mnist-close" type="button" data-mnist-close>
-          Close
+    <div class="mnist-panel">
+      <div class="mnist-output">
+        <p class="mnist-output-label">Generated digit</p>
+        <canvas
+          data-mnist-canvas
+          width="28"
+          height="28"
+          role="img"
+          aria-label="Generated MNIST digit"
+        ></canvas>
+        <p class="mnist-status" data-mnist-status aria-live="polite">
+          Loading decoder…
+        </p>
+      </div>
+
+      <div class="mnist-controls">
+        <p class="mnist-controls-label">Latent dimensions</p>
+        <div class="mnist-slider-grid" data-mnist-sliders></div>
+        <button class="button mnist-reset" type="button" data-mnist-reset>
+          Reset sliders
         </button>
-      </header>
-
-      <div class="mnist-panel">
-        <div class="mnist-output">
-          <p class="mnist-output-label">Generated digit</p>
-          <canvas
-            data-mnist-canvas
-            width="28"
-            height="28"
-            role="img"
-            aria-label="Generated MNIST digit"
-          ></canvas>
-          <p class="mnist-status" data-mnist-status aria-live="polite">
-            Loading decoder…
-          </p>
-        </div>
-
-        <div class="mnist-controls">
-          <p class="mnist-controls-label">Latent dimensions</p>
-          <div class="mnist-slider-grid" data-mnist-sliders></div>
-          <button class="button mnist-reset" type="button" data-mnist-reset>
-            Reset sliders
-          </button>
-        </div>
       </div>
     </div>
-  </dialog>
+  </div>
 </div>
 
 <script>
@@ -83,9 +58,8 @@ const latentUrl = '/models/mnist-latent.json';
   const root = document.querySelector<HTMLElement>('[data-mnist-demo]');
 
   if (root) {
-    const openButton = root.querySelector<HTMLButtonElement>('[data-mnist-open]');
-    const dialog = root.querySelector<HTMLDialogElement>('[data-mnist-dialog]');
-    const closeButton = root.querySelector<HTMLButtonElement>('[data-mnist-close]');
+    const card = root.closest<HTMLElement>('.project');
+    const openButton = card?.querySelector<HTMLButtonElement>('.mnist-open');
     const canvas = root.querySelector<HTMLCanvasElement>('[data-mnist-canvas]');
     const status = root.querySelector<HTMLElement>('[data-mnist-status]');
     const sliders = root.querySelector<HTMLElement>('[data-mnist-sliders]');
@@ -99,18 +73,7 @@ const latentUrl = '/models/mnist-latent.json';
     let loadPromise: Promise<void> | null = null;
     let renderScheduled = false;
     let renderVersion = 0;
-
-    const setExpanded = (expanded: boolean) => {
-      openButton?.setAttribute('aria-expanded', String(expanded));
-    };
-
-    const closeDialog = () => {
-      if (!dialog) return;
-      if (dialog.open) dialog.close();
-      setExpanded(false);
-    };
-
-    dialog?.addEventListener('close', () => setExpanded(false));
+    let loadingStage = 'starting';
 
     const setStatus = (message: string, busy = false) => {
       if (status) status.textContent = message;
@@ -220,6 +183,7 @@ const latentUrl = '/models/mnist-latent.json';
       if (!modelUrl || !latentUrl) throw new Error('MNIST model URLs are missing');
 
       loadPromise = (async () => {
+        loadingStage = 'loading TensorFlow and latent metadata';
         const [tf, latentResponse] = await Promise.all([
           import('@tensorflow/tfjs'),
           fetch(latentUrl),
@@ -229,10 +193,15 @@ const latentUrl = '/models/mnist-latent.json';
         }
 
         runtime = tf;
+        loadingStage = 'initializing TensorFlow';
         await runtime.ready();
+        loadingStage = 'reading latent metadata';
         latentSpace = (await latentResponse.json()) as LatentSpace;
+        loadingStage = 'loading model weights';
         decoder = await runtime.loadLayersModel(modelUrl);
+        loadingStage = 'creating sliders';
         buildSliders(latentSpace);
+        loadingStage = 'rendering the first digit';
         await render();
       })();
 
@@ -240,30 +209,28 @@ const latentUrl = '/models/mnist-latent.json';
         await loadPromise;
       } catch (error) {
         loadPromise = null;
+        decoder?.dispose();
+        decoder = null;
         throw error;
       }
     };
 
-    openButton?.addEventListener('click', async () => {
-      if (!dialog || !openButton) return;
-      if (!dialog.open) dialog.showModal();
-      setExpanded(true);
-      if (decoder) return;
+    const activate = async () => {
+      if (decoder || loadPromise) return;
 
       setStatus('Loading decoder…', true);
-      openButton.disabled = true;
       try {
         await loadModel();
         setStatus('Ready · drag a slider to change the digit');
       } catch (error) {
         console.error('Unable to load the MNIST decoder', error);
-        setStatus('The decoder could not load. Try again.');
-      } finally {
-        openButton.disabled = false;
+        const reason = error instanceof Error ? error.message : String(error);
+        setStatus(`Decoder failed during ${loadingStage}: ${reason}`);
       }
-    });
-
-    closeButton?.addEventListener('click', closeDialog);
+    };
+    openButton?.addEventListener('click', () => { void activate(); });
+    card?.addEventListener('project:expanded', () => { void activate(); });
+    if (card?.classList.contains('is-expanded')) void activate();
 
     resetButton?.addEventListener('click', () => {
       root.querySelectorAll<HTMLInputElement>('[data-latent-slider]').forEach(

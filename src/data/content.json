@@ -153,14 +153,14 @@
       "gjk for my game engine",
       "rl villager sims using ppo",
       "4d visualizers",
-      "2 papers for chi '26",
+      "2 papers for chi '27",
       "spoiler free wikipedias for series i'm reading",
       "mech interp on llms",
       "a platformer game using my game engine",
       "finetuning local models for library specific autocomplete",
       "a compute scheduler for my own machine",
       "optimized convolutions using custom mps kernels"
-      ]
+    ]
   },
   "about": {
     "paragraphs": [
@@ -191,7 +191,8 @@
       "role": "Researcher",
       "bullets": [
         "Researching air-based haptic and sensing mediums with a focus on ML approaches.",
-        "Submitted 2 papers to CHI '26 (awaiting decision)",
+        "Submitted 2 papers to CHI '27 (awaiting decision)",
+        "Additionally worked on personally led project (Glyph Interpreter) for real time custom gestures in VR.",
         "Tools: Unity, Blender, C#, Arduino API, Python"
       ],
       "date": "September 2025 - Present"
@@ -240,6 +241,7 @@
   "projects": [
     {
       "title": "Yope3D",
+      "stills": [],
       "blurb": "A 3D graphics Engine made from LWJGL and Java.",
       "img": "/assets/img/yope_cloth_b.gif",
       "img_alt": "quiz app",
@@ -252,7 +254,24 @@
       "aria_label": "Visit "
     },
     {
+      "title": "GlyphInterpreter",
+      "stills": [],
+      "blurb": "A handtracking system that learns custom gestures with one shot identification.",
+      "img": null,
+      "img_alt": "GlyphInterpreter running on a Quest headset",
+      "reveal_heading": "How it works",
+      "bullets": [
+        "Tools: Unity, C#, Sentis, Pytorch, Meta XR, Arduino",
+        "An encoder trained with contrastive loss that uses self supervised learning (no labels) to learn the structure of hand shape",
+        "Uses L2 norm to classify on the fly gestures via cluster (with a tunable threshold to control the sensitivity of classification).",
+        "Converts a trained Pytorch model into ONNX for Sentis usage to allow for integration into a unity scene, making the entire gesture generation process accessible to end users."
+      ],
+      "href": "https://github.com/yugumishra/GlyphInterpreter",
+      "aria_label": "Visit the GlyphInterpreter repository"
+    },
+    {
       "title": "MNIST Beta VAE",
+      "stills": [],
       "blurb": "A neural network capable of generating human readable digits.",
       "img": "/assets/img/digit_animation.gif",
       "img_alt": "quiz app",
@@ -267,6 +286,7 @@
     },
     {
       "title": "SpinStack",
+      "stills": [],
       "blurb": "A music exploration app focused on sharable song snippets.",
       "img": "/assets/img/spinstack_demo.gif",
       "img_alt": "quiz app",
@@ -280,6 +300,7 @@
     },
     {
       "title": "Java AI",
+      "stills": [],
       "blurb": "A built from scratch Java codebase capable of training various types of neural networks.",
       "img": "/assets/img/java_ai_graphic.svg",
       "img_alt": "Screenshot of web app",
@@ -294,6 +315,7 @@
     },
     {
       "title": "Polynomial Root Solver",
+      "stills": [],
       "blurb": "A simple Java application capable of solving for the roots of a polynomial.",
       "img": "/assets/img/Polynomial.png",
       "img_alt": "Screenshot of web app",
@@ -308,6 +330,7 @@
     },
     {
       "title": "3D Gravity Simulator",
+      "stills": [],
       "blurb": "A 3D gravity simulator that simulates orbital mechanics based on Java.",
       "img": "/assets/img/3d_grav_b_3.gif",
       "img_alt": "music streaming app",
@@ -376,7 +399,6 @@
             "img": "/assets/img/vulkan-logo-1.png",
             "img_alt": "Vulkan Logo"
           },
-
           {
             "name": "Unity",
             "img": "/assets/img/unity-69-logo.png",
