@@ -16,14 +16,14 @@ const clips = [
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>Sliding lettering — Yope3D showcase test</title>
+    <title>Sliding lettering — project showcase test</title>
   </head>
   <body>
     <main>
       <header>
         <a href="/">← Portfolio</a>
         <h1>Sliding lettering</h1>
-        <p>A moving mask over four playing clips. Compare floating lettering with text points that deform the lattice.</p>
+        <p>Project footage moves through lettering formed by a deformed lattice. The featured project's footage floods in and squeezes a collage of the other projects into its name. Compare it with the other mesh presets or the four-clip selector mask.</p>
       </header>
 
       <figure>
@@ -33,6 +33,10 @@ const clips = [
           <canvas id="showcase-mesh-debug" width="1280" height="720" hidden aria-hidden="true"></canvas>
           <canvas id="showcase-mesh-next" width="1280" height="720" hidden role="img" aria-label="The SpinStack project appears in the deformed video mesh."></canvas>
           <canvas id="showcase-mesh-next-debug" width="1280" height="720" hidden aria-hidden="true"></canvas>
+          <canvas id="showcase-mesh-third" width="1280" height="720" hidden role="img" aria-label="The β-VAE project appears in the deformed video mesh."></canvas>
+          <canvas id="showcase-mesh-third-debug" width="1280" height="720" hidden aria-hidden="true"></canvas>
+          <canvas id="showcase-mesh-fourth" width="1280" height="720" hidden role="img" aria-label="The GlyphInterpreter project appears in the deformed video mesh."></canvas>
+          <canvas id="showcase-mesh-fourth-debug" width="1280" height="720" hidden aria-hidden="true"></canvas>
           <p id="loading" role="status">Loading clips…</p>
         </div>
         <figcaption>
@@ -105,15 +109,20 @@ const clips = [
             <label for="m-preset">Preset</label>
             <select id="m-preset">
               <option value="custom" selected>Custom</option>
+              <option value="origin-flow">Origin flow · collage squeezed into the word</option>
+              <option value="territories">Breathing territories · prototype 3</option>
               <option value="faithful-g-single">Faithful G · single cloth</option>
-              <option value="fixed-jumble">Fixed jumble · page default</option>
+              <option value="fixed-jumble">Fixed jumble</option>
               <option value="origin-commit">Origin commit · ground is the project</option>
               <option value="origin-squeeze">Origin squeeze · clips compress away</option>
               <option value="origin-push">Origin push · far to near</option>
+              <option value="cloth-wipe">Cloth wipe · the bake alone writes the word</option>
+              <option value="cloth-mesh">Cloth mesh · the bake's own cloth pours down the word</option>
+              <option value="cloth-lift">Cloth lift · the word rises under the clip and carries it away</option>
               <option value="family-hybrid">Family hybrid · round 4</option>
             </select>
             <label for="m-sequence">Projects</label>
-            <select id="m-sequence"><option value="single">One project</option><option value="duo" selected>Yope3D → SpinStack</option></select>
+            <select id="m-sequence"><option value="single">One project</option><option value="duo">Yope3D → SpinStack</option><option value="trio">Yope3D → SpinStack → β-VAE</option><option value="quad" selected>Yope3D → SpinStack → β-VAE → GlyphInterpreter</option></select>
             <output id="m-project-out">Yope3D</output>
             <button id="m-reset" type="button">Reset all</button>
             <output id="m-changed-out" class="changed-out">all defaults</output>
@@ -147,7 +156,7 @@ const clips = [
             <details>
               <summary>Attenuation cycle<span class="badge" aria-hidden="true"></span></summary>
               <div class="rows">
-                <div class="row"><label for="m-idle">Idle</label><input id="m-idle" type="range" min="0" max="6" step="0.1" value="2" /><output id="m-idle-out">2.0 s</output></div>
+                <div class="row"><label for="m-idle">Idle</label><input id="m-idle" type="range" min="0" max="12" step="0.1" value="2" /><output id="m-idle-out">2.0 s</output></div>
                 <div class="row"><label for="m-settle">Settle</label><input id="m-settle" type="range" min="1" max="10" step="0.1" value="4.5" /><output id="m-settle-out">4.5 s</output></div>
                 <div class="row"><label for="m-hold">Hold</label><input id="m-hold" type="range" min="0" max="8" step="0.1" value="3" /><output id="m-hold-out">3.0 s</output></div>
                 <div class="row"><label for="m-release">Release</label><input id="m-release" type="range" min="1" max="10" step="0.1" value="3" /><output id="m-release-out">3.0 s</output></div>
@@ -196,18 +205,40 @@ const clips = [
             <details>
               <summary>Footage<span class="badge" aria-hidden="true"></span></summary>
               <div class="rows">
-                <div class="row"><label for="m-footage">Mode</label><select id="m-footage"><option value="jumble" selected>Fixed mixed jumble</option><option value="single">Single clip</option></select><output id="m-footage-out">fixed mix</output></div>
-                <div class="row"><label for="m-clip">Clip</label><select id="m-clip"><option value="0" selected>Yope3D cloth</option><option value="1">SpinStack</option><option value="2">Digits</option><option value="3">Gravity</option></select><output id="m-clip-out">cloth</output></div>
+                <div class="row"><label for="m-footage">Mode</label><select id="m-footage"><option value="jumble" selected>Fixed mixed jumble</option><option value="single">Single clip</option><option value="territories">Breathing territories</option><option value="cloth">Cloth wipe · clip pulled through its word</option><option value="clothmesh">Cloth mesh · the bake's cloth, drawn in 3D</option><option value="clothlift">Cloth lift · letters rise under it, slide it away</option></select><output id="m-footage-out">fixed mix</output></div>
+                <div class="row"><label for="m-clip">Clip</label><select id="m-clip"><option value="0" selected>Yope3D cloth</option><option value="1">SpinStack</option><option value="2">Digits</option><option value="3">Gravity</option><option value="4">GlyphInterpreter</option></select><output id="m-clip-out">cloth</output></div>
                 <div class="row checks"><label class="check" for="m-commit"><input id="m-commit" type="checkbox" /> Commit to families (round 4)</label></div>
-                <div class="row"><label for="m-commit-transition">Commit change</label><select id="m-commit-transition" disabled><option value="cut" selected>Switch clips</option><option value="squeeze">Squeeze outgoing clips</option><option value="push">Push far to near</option></select><output id="m-commit-transition-out">needs commit</output></div>
+                <div class="row"><label for="m-commit-transition">Commit change</label><select id="m-commit-transition" disabled><option value="cut" selected>Switch clips</option><option value="squeeze">Squeeze outgoing clips</option><option value="push">Push far to near</option><option value="flow">Flow into the word</option></select><output id="m-commit-transition-out">needs commit</output></div>
+                <div class="row"><label for="m-cloth-frontier">Cloth</label><select id="m-cloth-frontier" disabled><option value="off">Off · plain distance</option><option value="height">Height only · sag bends the edge</option><option value="frontier" selected>Frontier rides the sheet</option><option value="collage">Frontier and collage ride it</option></select><output id="m-cloth-frontier-out">needs flow</output></div>
+                <div class="row"><label class="check" for="m-hold-drop"><input id="m-hold-drop" type="checkbox" disabled /> Drop at hold</label><input id="m-drop-bounce" type="range" min="0" max="0.8" step="0.05" value="0.45" disabled /><output id="m-drop-bounce-out">needs flow</output></div>
+                <div class="row"><label for="m-cloth-relief">Cloth relief</label><input id="m-cloth-relief" type="range" min="0" max="1" step="0.05" value="0.7" disabled /><output id="m-cloth-relief-out">needs the cloth wipe</output></div>
+                <div class="row"><label for="m-cloth-bevel">Bevel</label><input id="m-cloth-bevel" type="range" min="0" max="3" step="0.05" value="0.4" /><output id="m-cloth-bevel-out">0.40</output></div>
                 <div class="row"><label for="m-idle-field">Idle field</label><select id="m-idle-field" disabled><option value="jumble" selected>Jumble</option><option value="single">Single clip</option></select><output id="m-idle-field-out">collage</output></div>
                 <div class="row"><label for="m-stagger">Commit stagger</label><input id="m-stagger" type="range" min="0" max="1" step="0.01" value="0.72" disabled /><output id="m-stagger-out">0.72</output></div>
                 <div class="row checks"><label class="check" for="m-family"><input id="m-family" type="checkbox" checked disabled /> Family split</label></div>
                 <div class="row"><label for="m-family-mode">Split by</label><select id="m-family-mode" disabled><option value="luminance" selected>Mean luminance · round 4</option><option value="origin">Origin clip · from the Clip select</option><option value="origin-auto">Origin clip · matched from the word</option></select><output id="m-family-mode-out">needs commit</output></div>
-                <p class="note">Without commitment the palette is fixed for the whole cycle, so idle and hold draw the identical mix and only the geometry animates. The luminance split goes near black at the hold on the current four clips.</p>
-                <p class="note">Origin split ignores luminance: the ground commits to the clip chosen above — the project the word names — and the other three commit away out of it, into the letters. The home clip is excluded from the letter pool, because a letter cell drawing the same clip as the ground behind it would be a hole in the word.</p>
-                <p class="note">Origin push settles the word's clips early, then moves the surrounding clips away from far to near as the field strengthens. The last ones leave at full strength. The core stays unchanged through the push and hold while its footage breathes. Release returns the original collage.</p>
+                <p class="note">Without commitment the palette is fixed for the whole cycle, so idle and hold draw the identical mix and only the geometry animates. The luminance split goes near black at the hold on the current clips.</p>
+                <p class="note">Origin split ignores luminance: the ground commits to the clip chosen above — the project the word names — and the remaining clips commit away out of it, into the letters. The home clip is excluded from the letter pool, because a letter cell drawing the same clip as the ground behind it would be a hole in the word.</p>
+                <p class="note">Flow into the word never switches a cell. The collage is a pattern carried by a flow: the featured footage floods in along the distance to the word, far first, and pushes the collage ahead of its edge, squeezed, until it slides under. What reaches the letters is packed into them, so at the hold the letters are full of collage over the featured footage. Release flows it back out. The featured project's own pieces never move: they stand where they were, at full size, and the flood takes them in without a seam, since they already show its footage in its place. Only the other pieces are carried, beneath them. Inside the letters, the collage flowing in covers any featured pieces standing there, from the contour to the core, so the word holds only the other projects. Every piece shows its clip at its own place on screen. At idle the collage is the same for every project, so the page swaps projects with no seam at all.</p>
+                <p class="note">Cloth wipe is the opening simplified: the clips are stacked in sequence order, each lying under the one before it, and no collage, force field or glyph solve is involved. A project's clip plays plain for most of its segment — nothing is drawn over the middle of the frame — and the only thing that happens is the transition out of it. That clip is painted on the project's own Blender bake: the fall drags it into the letter-shaped holes of the project's word, so the word is written in its own footage, while the next project's clip comes in behind the fabric. The frontier is the distance to the word at the material point of the fabric visible at each point, read straight off the bake's own grid: no lattice and no smoothing. The fabric is lit by the sheet's own slope, so the pleats and the walls of the holes show, and Cloth relief sets how much of that shape is drawn. The squeeze shades it through Strength and Polarity above. Nothing rewinds and nothing fades: the release carries the same frontier down through the letters, pulling the last of the fabric through its own holes, and leaves the uncovered clip alone on the frame, which is the next project's own, so the projects meet exactly.</p>
+                <p class="note">Each project's word has its own Blender bake: its letters hit a cloth lying over letter-shaped holes in a floor, fall through together, and pull the cloth in after them. A bake applies only at the size it was made for. With Frontier rides the sheet, the flood's edge follows the fabric's material points, at the fabric's pace, so it runs ahead of the plain flood. Frontier and collage ride it also carries the collage with the fabric, so it bunches into pleats around the letters. Height only is the first mapping, kept for comparison. Idle, hold and release end are the same in every mode.</p>
+                <p class="note">Drop at hold: once formed, the word falls out of the middle of the frame under gravity and bounces to rest near the bottom, keeping the slider's share of its speed at each bounce. It moves by whole lattice rows, with the lattice drawn shifted by the fraction left over, so the letters stay crisp as they fall and the footage stays put. It rises back as it releases, so every project still forms in the middle.</p>
+                <p class="note">Origin push settles the word's clips early, then moves the surrounding clips away from far to near as the field strengthens. The last ones leave at full strength. The core stays unchanged through the push and hold, and the lattice's breathing settles out as the word forms, so the held word stands still. Release returns the original collage.</p>
                 <p class="note">Matched from the word compares the Text field against each clip's name and its aliases, and uses the winner as the ground, so changing the word changes the project. Greek letters fold to their names first, so a word typed with a real β still finds a clip aliased <code>beta-VAE</code>. It falls back to the Clip select when nothing matches, and the readout always names the clip that actually won.</p>
+              </div>
+            </details>
+
+            <details>
+              <summary>Territories<span class="badge" aria-hidden="true"></span></summary>
+              <div class="rows">
+                <div class="row"><label for="m-territory-regions">Regions each</label><input id="m-territory-regions" type="range" min="1" max="4" step="1" value="1" disabled /><output id="m-territory-regions-out">1 · prototype 3</output></div>
+                <div class="row"><label for="m-territory-growth">Growth</label><input id="m-territory-growth" type="range" min="0" max="0.35" step="0.01" value="0.25" disabled /><output id="m-territory-growth-out">0.25 · 40→90%</output></div>
+                <div class="row"><label for="m-territory-breath">Border breath</label><input id="m-territory-breath" type="range" min="0" max="2" step="0.05" value="1" disabled /><output id="m-territory-breath-out">±40 px</output></div>
+                <div class="row"><label for="m-territory-roles-out">Regions</label><output id="m-territory-roles-out" class="wide">needs territories</output></div>
+                <p class="note">Prototype 3, revised. Four projects hold broad regions of the frame, each playing one continuous clip, with the featured project in the middle. Its region grows to dominate as the word forms. Only its own lattice cells take F's pull toward the letter contour, fading out over 2.5 cells inside each border.</p>
+                <p class="note">Both borders breathe the whole time, on the prototype's 6 s and 9 s swells, and they are drawn per pixel in the undeformed lattice. A border slides through the cells rather than stepping between them, and it bends with the mesh like the footage does.</p>
+                <p class="note">Regions each gives every project that many bands across the frame, interleaved in sequence order. The featured project's bands widen together as the word forms, and the others thin to slivers that cut through it. Only the featured project's cells take the pull, so each sliver breaks the word, and the word heals when a sliver pinches shut, which Growth 0.30 or more does at the hold. With an even count the frame ends on halves of the featured project, which keeps one of its bands in the middle, under the word. With more than one region, every border also takes a slow bend from where it sits across the frame, so a thin band wiggles as one thread instead of flattening into a column edge. Each border's own bend shrinks with the gap to its neighbours, so no two borders ever cross.</p>
+                <p class="note">Nothing crossfades. As the word releases, the next project's region sweeps in from the right and takes the middle. It pushes the featured project into the left slot, the old left region slides off the edge, and the project after next enters on the right. The release ends exactly on the next project's opening frame, so the page swaps projects without a visible seam, and every region plays one continuous clip throughout. GlyphInterpreter is solved on two lines, as in the prototype, so every project keeps 80 columns.</p>
               </div>
             </details>
 
@@ -238,6 +269,10 @@ const clips = [
         </video>
         <canvas id="generated-mask" width="1280" height="720" aria-hidden="true"></canvas>
         {clips.map((clip) => <video data-clip data-name={clip.name} data-aliases={clip.aliases.join('|')} src={clip.src} muted loop playsinline preload="auto"></video>)}
+        <video data-mesh-clip data-name="GlyphInterpreter" data-aliases="Glyph" muted loop playsinline preload="auto">
+          <source src="/media/glyph_demo.webm" type="video/webm" />
+          <source src="/media/glyph_demo.mp4" type="video/mp4" />
+        </video>
       </div>
     </main>
     <script>
@@ -266,6 +301,8 @@ const clips = [
   .stage canvas { position: absolute; inset: 0; }
   .stage #showcase-mesh-debug { pointer-events: none; }
   .stage #showcase-mesh-next-debug { pointer-events: none; }
+  .stage #showcase-mesh-third-debug { pointer-events: none; }
+  .stage #showcase-mesh-fourth-debug { pointer-events: none; }
   #loading { position: absolute; inset: 0; display: grid; place-items: center; padding: 28px; text-align: center; margin: 0; background: #16191e; color: #aab3bf; }
   #loading[hidden] { display: none; }
   figcaption { display: flex; justify-content: space-between; gap: 16px; color: #9aa3b0; font-size: 12px; padding: 10px 0 18px; }
@@ -344,6 +381,7 @@ const clips = [
   .mesh select { min-height: 32px; padding: 3px 8px; width: 100%; min-width: 0; }
   .mesh button { min-height: 32px; padding: 3px 10px; }
   .mesh output { color: #9aa3b0; font: 11px/1.4 ui-monospace, monospace; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mesh .row output.wide { grid-column: 2 / -1; }
   .mesh .note { margin: 2px 0 0; color: #7f8894; font-size: 12px; }
   .mesh .note.warn { color: #e0a35c; }
   .mesh .marked { position: relative; display: grid; }

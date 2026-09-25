@@ -14,6 +14,10 @@ import {
   type FootageMode,
   type IdleField,
   type CommitTransition,
+  type ClothFrontier,
+  hasClothBake,
+  liftBevel,
+  setLiftBevel,
   type FamilyMode,
   type MeshShowcase,
 } from './showcase-mesh';
@@ -23,9 +27,75 @@ type MaskSource = HTMLVideoElement | HTMLCanvasElement;
 type Renderer = { draw: (settings: Settings, maskSource: MaskSource, maskChanged?: boolean) => void };
 type PointTopology = 'contour-faces' | 'edge-splits' | 'lattice-tessellation' | 'pure-lattice';
 
-type MeshPresetName = 'custom' | 'faithful-g-single' | 'fixed-jumble' | 'origin-commit' | 'origin-squeeze' | 'origin-push' | 'family-hybrid';
+type MeshPresetName = 'custom' | 'origin-flow' | 'cloth-wipe' | 'cloth-mesh' | 'cloth-lift' | 'territories' | 'faithful-g-single' | 'fixed-jumble' | 'origin-commit' | 'origin-squeeze' | 'origin-push' | 'family-hybrid';
+
+/** The page opens on this preset, and Reset all returns to it. */
+const DEFAULT_PRESET: Exclude<MeshPresetName, 'custom'> = 'origin-flow';
 
 const MESH_PRESETS: Record<Exclude<MeshPresetName, 'custom'>, Partial<MeshParams>> = {
+  // Origin push, with the collage carried instead of switched. The featured
+  // footage floods in from far to near and pushes the collage ahead of it
+  // until it is packed into the letters; release lets it flow back out. The
+  // ends match origin push: the collage at idle, and at the hold the letters
+  // full of collage over the featured project's footage.
+  'origin-flow': {
+    algorithm: 'settle', warpCorrespondence: 'offset', gain: 1, footage: 'jumble', clip: 0,
+    commit: true, commitTransition: 'flow', clothFrontier: 'frontier', holdDrop: true, dropBounce: 0.45, idleField: 'jumble', familySplit: true, familyMode: 'origin', jumbleShading: 'on',
+    columns: 88, strength: 0.55, polarity: 'compression-dark', smoothingPx: 3, stagger: 0.72, spread: 1, releaseShape: 'asymmetric',
+    breath: 0.3, idle: 2, settle: 4.5, hold: 3, release: 3,
+  },
+  // The opening simplified: the clips play in order, one a project, plain,
+  // and the only thing that happens is the transition out of each one. The
+  // project's own clip is the fabric: its cloth bake drags it into the
+  // letter-shaped holes of its name and pulls it through them, leaving the
+  // next project's clip. No collage, no force field, no glyph; the squeeze
+  // and the sag are the only shading.
+  'cloth-wipe': {
+    algorithm: 'settle', footage: 'cloth', clip: 0, commit: false, commitTransition: 'cut',
+    familySplit: false, familyMode: 'origin', idleField: 'single', jumbleShading: 'on',
+    clothRelief: 0.7, holdDrop: false, breath: 0, strength: 0.55, polarity: 'compression-dark',
+    columns: 88, spread: 1, releaseShape: 'asymmetric',
+    // Mostly the clip, plain: the fall is the transition out of it, not a
+    // display. The word holds long enough to read, then is pulled through.
+    idle: 6, settle: 2.5, hold: 2, release: 1.5,
+  },
+  // The cloth wipe drawn from the bake's own mesh (bake-showcase-cloth.py
+  // --mesh): the clip on the real cloth, textured through its UVs and lit by
+  // its normals, pouring down the word's holes in the next clip's floor. The
+  // word holds as those holes, which heal shut in the release.
+  'cloth-mesh': {
+    algorithm: 'settle', footage: 'clothmesh', clip: 0, commit: false, commitTransition: 'cut',
+    familySplit: false, familyMode: 'origin', idleField: 'single', jumbleShading: 'on',
+    clothRelief: 0.7, holdDrop: false, breath: 0, strength: 0.55, polarity: 'compression-dark',
+    columns: 88, spread: 1, releaseShape: 'asymmetric',
+    // the hold: a second for the cloth to straighten under the holes, then
+    // the word, still, long enough to read
+    idle: 6, settle: 2.5, hold: 2.8, release: 1.5,
+  },
+  // The inverse (bake-showcase-cloth.py --lift): dished letters rise under
+  // the resting cloth, the word holds draped over them, and they slide away
+  // down the frame taking the cloth with them, the next clip left behind.
+  'cloth-lift': {
+    algorithm: 'settle', footage: 'clothlift', clip: 0, commit: false, commitTransition: 'cut',
+    familySplit: false, familyMode: 'origin', idleField: 'single', jumbleShading: 'on',
+    clothRelief: 0.7, holdDrop: false, breath: 0, strength: 0.55, polarity: 'compression-dark',
+    columns: 88, spread: 1, releaseShape: 'asymmetric',
+    idle: 6, settle: 2.5, hold: 2.8, release: 4,
+  },
+  // Prototype 3, revised (agent-work/prototype-3-broad-regions): three
+  // breathing footage territories. The featured project's territory grows to
+  // dominate the frame while only its own cells take F's pull toward the
+  // letter contour, using the raw settle field the prototype baked. Each
+  // project runs 12 s: 1.7 s idle, 3.8 s formation, 3.2 s hold, then a
+  // 3.3 s release in which the next project's region sweeps in and takes the
+  // middle. That release replaces the prototype's 2 s release and 1.3 s
+  // crossfade seam with one continuous movement.
+  territories: {
+    algorithm: 'settle', warpCorrespondence: 'offset', gain: 1, footage: 'territories', clip: 0,
+    commit: false, commitTransition: 'cut', idleField: 'jumble', familySplit: false, familyMode: 'luminance', jumbleShading: 'on',
+    columns: 80, breath: 0.1, strength: 0.55, polarity: 'compression-dark', smoothingPx: 3, spread: 0, releaseShape: 'disperse',
+    idle: 1.7, settle: 3.8, hold: 3.2, release: 3.3, territoryGrowth: 0.25, territoryBreath: 1, territoryRegions: 1,
+  },
   'faithful-g-single': {
     algorithm: 'warp', warpCorrespondence: 'late-g-lens', gain: 0.8, footage: 'single', clip: 0,
     commit: false, commitTransition: 'cut', idleField: 'single', familySplit: false, familyMode: 'luminance', jumbleShading: 'on',
@@ -33,33 +103,40 @@ const MESH_PRESETS: Record<Exclude<MeshPresetName, 'custom'>, Partial<MeshParams
     // probe-g-global-warp.py RAMP_SHIP = (0.8, 5.3, 8.3, 11.3)
     polarity: 'compression-bright', smoothingPx: 3, idle: 0.8, settle: 4.5, hold: 3, release: 3, releaseShape: 'disperse',
   },
+  // The F presets below were judged on the page's own breathing and cycle,
+  // which the territories preset changes, so each one names them.
   'fixed-jumble': {
     algorithm: 'settle', warpCorrespondence: 'offset', gain: 1, footage: 'jumble', clip: 0,
     commit: false, commitTransition: 'cut', idleField: 'jumble', familySplit: false, familyMode: 'luminance', jumbleShading: 'on',
     columns: 88, strength: 0.55, polarity: 'compression-dark', smoothingPx: 3, spread: 1, releaseShape: 'disperse',
+    breath: 0.3, idle: 2, settle: 4.5, hold: 3, release: 3,
   },
-  // The page default, with commitment switched on and pooled by origin: the
+  // The fixed jumble, with commitment switched on and pooled by origin: the
   // ground resolves into the clip the word is for, the letters keep the other
-  // three. Nothing else moves, so it is a true A/B against the default.
+  // sources. Nothing else moves, so it is a true A/B against the jumble.
   'origin-commit': {
     algorithm: 'settle', warpCorrespondence: 'offset', gain: 1, footage: 'jumble', clip: 0,
     commit: true, commitTransition: 'cut', idleField: 'jumble', familySplit: true, familyMode: 'origin', jumbleShading: 'on',
     columns: 88, strength: 0.55, polarity: 'compression-dark', smoothingPx: 3, stagger: 0.72, spread: 1, releaseShape: 'disperse',
+    breath: 0.3, idle: 2, settle: 4.5, hold: 3, release: 3,
   },
   'origin-squeeze': {
     algorithm: 'settle', warpCorrespondence: 'offset', gain: 1, footage: 'jumble', clip: 0,
     commit: true, commitTransition: 'squeeze', idleField: 'jumble', familySplit: true, familyMode: 'origin', jumbleShading: 'on',
     columns: 88, strength: 0.55, polarity: 'compression-dark', smoothingPx: 3, stagger: 0.72, spread: 1, releaseShape: 'disperse',
+    breath: 0.3, idle: 2, settle: 4.5, hold: 3, release: 3,
   },
   'origin-push': {
     algorithm: 'settle', warpCorrespondence: 'offset', gain: 1, footage: 'jumble', clip: 0,
     commit: true, commitTransition: 'push', idleField: 'jumble', familySplit: true, familyMode: 'origin', jumbleShading: 'on',
     columns: 88, strength: 0.55, polarity: 'compression-dark', smoothingPx: 3, stagger: 0.72, spread: 1, releaseShape: 'asymmetric',
+    breath: 0.3, idle: 2, settle: 4.5, hold: 3, release: 3,
   },
   'family-hybrid': {
     algorithm: 'settle', warpCorrespondence: 'offset', gain: 1, footage: 'jumble', clip: 0,
     commit: true, commitTransition: 'cut', idleField: 'jumble', familySplit: true, familyMode: 'luminance', jumbleShading: 'on',
     columns: 64, strength: 0.55, polarity: 'compression-dark', smoothingPx: 3, spread: 1, releaseShape: 'disperse',
+    breath: 0.3, idle: 2, settle: 4.5, hold: 3, release: 3,
   },
 };
 
@@ -1172,10 +1249,18 @@ function createMeshPanel(
   debugCanvas?: HTMLCanvasElement,
   nextCanvas?: HTMLCanvasElement,
   nextDebugCanvas?: HTMLCanvasElement,
+  thirdCanvas?: HTMLCanvasElement,
+  thirdDebugCanvas?: HTMLCanvasElement,
+  fourthCanvas?: HTMLCanvasElement,
+  fourthDebugCanvas?: HTMLCanvasElement,
 ): MeshPanel | null {
-  const firstShowcase = createMeshShowcase(canvas, footage, debugCanvas);
-  if (!firstShowcase) return null;
-  let secondShowcase: MeshShowcase | null = null;
+  const created = createMeshShowcase(canvas, footage, debugCanvas, true);
+  if (!created) return null;
+  const firstShowcase: MeshShowcase = created;
+  // Created on demand, so the compiler must not narrow them to their `null`.
+  let secondShowcase = null as MeshShowcase | null;
+  let thirdShowcase = null as MeshShowcase | null;
+  let fourthShowcase = null as MeshShowcase | null;
   let showcase = firstShowcase;
   let projectIndex = 0;
   const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -1221,11 +1306,18 @@ function createMeshPanel(
     footage: el<HTMLSelectElement>('m-footage'),
     commit: el<HTMLInputElement>('m-commit'),
     commitTransition: el<HTMLSelectElement>('m-commit-transition'),
+    clothFrontier: el<HTMLSelectElement>('m-cloth-frontier'),
+    clothRelief: el<HTMLInputElement>('m-cloth-relief'),
+    holdDrop: el<HTMLInputElement>('m-hold-drop'),
+    dropBounce: el<HTMLInputElement>('m-drop-bounce'),
     idleField: el<HTMLSelectElement>('m-idle-field'),
     stagger: el<HTMLInputElement>('m-stagger'),
     clip: el<HTMLSelectElement>('m-clip'),
     family: el<HTMLInputElement>('m-family'),
     familyMode: el<HTMLSelectElement>('m-family-mode'),
+    territoryRegions: el<HTMLInputElement>('m-territory-regions'),
+    territoryGrowth: el<HTMLInputElement>('m-territory-growth'),
+    territoryBreath: el<HTMLInputElement>('m-territory-breath'),
     view: el<HTMLSelectElement>('m-view'),
     curve: el<HTMLCanvasElement>('m-curve'),
     status: el<HTMLOutputElement>('m-status'),
@@ -1237,46 +1329,134 @@ function createMeshPanel(
 
   let params: MeshParams = { ...MESH_DEFAULTS };
   let clock = 0;
+  /** Whole passes of the sequence, so `clock + laps * total` never wraps. */
+  let laps = 0;
   let running = true;
   let active = false;
   let solveTimer: number | null = null;
   const n = (input: HTMLInputElement) => Number(input.value);
-  const duo = () => c.sequence.value === 'duo';
-  const projectNames = ['Yope3D', 'SpinStack'];
+  const sequenceCount = () => c.sequence.value === 'quad' ? 4 : c.sequence.value === 'trio' ? 3 : c.sequence.value === 'duo' ? 2 : 1;
+  const sequenced = () => sequenceCount() > 1;
+  const projectNames = ['Yope3D', 'SpinStack', 'β-VAE', 'GlyphInterpreter'];
+  const projectWords = ['Yope3D', 'SpinStack', 'β-VAE', 'Glyph\nInterpreter'];
+  const projectClips = [0, 1, 2, 4];
+  // Prototype 3 solved each name at its own size and stacked the long one,
+  // which keeps every project on the same 80 columns.
+  const territoryFonts = [230, 199, 230, 170];
+  /** The canvas crossfade between projects. Territories and the flow need
+   *  none: their release already ends on the next project's opening frame,
+   *  so the two displays swap in a single paint. */
+  const handoffSeconds = () => params.footage === 'territories' || params.footage === 'cloth' || params.footage === 'clothmesh' || params.footage === 'clothlift' || (params.footage === 'jumble' && params.commit && params.commitTransition === 'flow') ? 0 : 0.55;
+  const backgroundWorkers = typeof Worker !== 'undefined' && typeof OffscreenCanvas !== 'undefined';
+  const smoothUnit = (value: number) => {
+    const t = Math.max(0, Math.min(1, value));
+    return t * t * (3 - 2 * t);
+  };
+  let handoffFrom = -1;
+  let waitingFor = -1;
+
+  function display(index: number) {
+    return index === 3
+      ? { canvas: fourthCanvas, debug: fourthDebugCanvas, engine: fourthShowcase }
+      : index === 2
+      ? { canvas: thirdCanvas, debug: thirdDebugCanvas, engine: thirdShowcase }
+      : index === 1
+        ? { canvas: nextCanvas, debug: nextDebugCanvas, engine: secondShowcase }
+        : { canvas, debug: debugCanvas, engine: firstShowcase };
+  }
+
+  function showDisplay(index: number, visible: boolean, opacity = 1, zIndex = 1) {
+    const item = display(index);
+    item.engine?.setVisible(visible);
+    if (item.canvas) {
+      item.canvas.hidden = !visible;
+      item.canvas.style.opacity = String(opacity);
+      item.canvas.style.zIndex = String(zIndex);
+    }
+    if (item.debug) {
+      item.debug.style.opacity = String(opacity);
+      item.debug.style.zIndex = String(zIndex + 1);
+    }
+  }
+
+  /** One project: the chosen clip leads the ring, so it is featured, with the
+   *  next project on its right and the previous one on its left. */
+  function territoryRingFor(clip: number): number[] {
+    const index = projectClips.indexOf(clip);
+    const around = (step: number) => projectClips[(index + step + projectClips.length) % projectClips.length];
+    return index >= 0 ? projectClips.map((_, step) => around(step)) : [clip, ...projectClips.filter((projectClip) => projectClip !== clip)];
+  }
+
+  /** Left, featured and right clips a display opens on. */
+  function territoryNeighbours(ring: number[], shown: number): number[] {
+    const at = (step: number) => ring[(((shown + step) % ring.length) + ring.length) % ring.length];
+    return [at(-1), at(0), at(1)];
+  }
 
   function projectParams(base: MeshParams, index: number): MeshParams {
-    return duo() ? { ...base, text: projectNames[index], clip: index, homeClip: index } : base;
+    if (!sequenced()) return base;
+    const project = {
+      ...base,
+      text: projectWords[index],
+      clip: projectClips[index],
+      homeClip: projectClips[index],
+      clothUnder: projectClips[(index + 1) % sequenceCount()],
+      columns: base.columns,
+      // The strip of regions repeats the sequence. Each handover moves every
+      // region one place left along it, so the next project's regions are
+      // always the ones right of the featured project's.
+      territoryRing: projectClips.slice(0, sequenceCount()),
+      territoryHandover: true,
+    };
+    return base.footage === 'territories'
+      ? { ...project, fontSize: territoryFonts[index], fontAuto: false }
+      : project;
   }
 
-  function ensureSecond() {
-    if (!duo() || secondShowcase || !nextCanvas) return;
-    secondShowcase = createMeshShowcase(nextCanvas, footage, nextDebugCanvas);
-    if (secondShowcase) {
-      secondShowcase.setVisible(false);
-      secondShowcase.setParams(projectParams(read(), 1));
+  function ensureProjects(forceThrough = -1) {
+    if (sequenceCount() >= 2 && !secondShowcase && nextCanvas) {
+      secondShowcase = createMeshShowcase(nextCanvas, footage, nextDebugCanvas, true);
+      secondShowcase?.setVisible(false);
+      secondShowcase?.setParams(projectParams(read(), 1));
+    }
+    // With workers both incoming words can prepare from the start. On older
+    // browsers, let each incoming word finish before starting the next one.
+    if (sequenceCount() >= 3 && !thirdShowcase && thirdCanvas && (forceThrough >= 2 || backgroundWorkers || (projectIndex > 0 && handoffFrom < 0 && secondShowcase && !secondShowcase.status().solving))) {
+      thirdShowcase = createMeshShowcase(thirdCanvas, footage, thirdDebugCanvas, true);
+      thirdShowcase?.setVisible(false);
+      thirdShowcase?.setParams(projectParams(read(), 2));
+    }
+    if (sequenceCount() >= 4 && !fourthShowcase && fourthCanvas && (forceThrough >= 3 || backgroundWorkers || (projectIndex > 1 && handoffFrom < 0 && thirdShowcase && !thirdShowcase.status().solving))) {
+      fourthShowcase = createMeshShowcase(fourthCanvas, footage, fourthDebugCanvas, true);
+      fourthShowcase?.setVisible(false);
+      fourthShowcase?.setParams(projectParams(read(), 3));
     }
   }
 
-  function syncProject(index: number) {
+  function syncProject(index: number, keepPrevious = -1) {
     if (index === 1 && !secondShowcase) return;
+    if (index === 2 && !thirdShowcase) return;
+    if (index === 3 && !fourthShowcase) return;
     projectIndex = index;
-    showcase = index === 1 ? secondShowcase! : firstShowcase;
-    firstShowcase.setVisible(active && index === 0);
-    secondShowcase?.setVisible(active && index === 1);
-    canvas.hidden = !active || index !== 0;
-    if (nextCanvas) nextCanvas.hidden = !active || index !== 1;
-    if (duo()) {
+    showcase = display(index).engine!;
+    for (let project = 0; project < projectNames.length; project++) showDisplay(project, active && (index === project || keepPrevious === project));
+    if (sequenced()) {
       c.text.value = projectNames[index];
-      c.clip.value = String(index);
+      c.clip.value = String(projectClips[index]);
     }
-    c.project.textContent = duo() ? projectNames[index] : c.text.value;
-    c.projectCaption.textContent = `${c.project.textContent} / deformed mesh`;
+    c.project.textContent = sequenced() ? projectNames[index] : c.text.value;
+    caption();
+  }
+
+  function caption() {
+    const treatment = c.footage.value === 'territories' ? 'breathing territories' : c.footage.value === 'cloth' ? 'cloth wipe' : 'deformed mesh';
+    c.projectCaption.textContent = `${c.project.textContent} / ${treatment}`;
   }
 
   function selectPreset(name: MeshPresetName) {
     if (name === 'custom') return;
     const preset = MESH_PRESETS[name];
-    const textValues: Record<string, string | number | boolean> = {
+    const textValues: Record<string, unknown> = {
       ...preset,
       correspondence: preset.warpCorrespondence ?? 'offset',
     };
@@ -1289,24 +1469,26 @@ function createMeshPanel(
       flarePeak: c.flarePeak, flareCentre: c.flareCentre, flareWidth: c.flareWidth,
       polarity: c.polarity, smoothingPx: c.smooth, footage: c.footage, clip: c.clip,
       idleField: c.idleField, stagger: c.stagger, jumbleShading: c.jumbleShading, view: c.view,
-      familyMode: c.familyMode, commitTransition: c.commitTransition,
+      familyMode: c.familyMode, commitTransition: c.commitTransition, clothFrontier: c.clothFrontier, clothRelief: c.clothRelief, dropBounce: c.dropBounce,
+      territoryGrowth: c.territoryGrowth, territoryBreath: c.territoryBreath, territoryRegions: c.territoryRegions,
     };
     for (const [key, value] of Object.entries(textValues)) {
       const control = controlByKey[key];
-      if (!control || typeof value === 'boolean') continue;
+      if (!control || (typeof value !== 'string' && typeof value !== 'number')) continue;
       control.value = String(value);
     }
     c.fontAuto.checked = Boolean(preset.fontAuto ?? false);
     c.drift.checked = Boolean(preset.drift ?? false);
+    c.holdDrop.checked = Boolean(preset.holdDrop ?? false);
     c.ampAuto.checked = Boolean(preset.amplitudeAuto ?? true);
     c.luma.checked = Boolean(preset.lumaAdaptive ?? false);
     c.clamp.checked = Boolean(preset.clampIdleTail ?? false);
     c.commit.checked = Boolean(preset.commit ?? false);
     c.family.checked = Boolean(preset.familySplit ?? false);
     c.preset.value = name;
-    if (duo()) {
+    if (sequenced()) {
       c.text.value = projectNames[projectIndex];
-      c.clip.value = String(projectIndex);
+      c.clip.value = String(projectClips[projectIndex]);
     }
     apply(false);
     markChanged();
@@ -1403,6 +1585,13 @@ function createMeshPanel(
       footage: c.footage.value as FootageMode,
       commit: c.commit.checked,
       commitTransition: c.commitTransition.value as CommitTransition,
+      clothFrontier: c.clothFrontier.value as ClothFrontier,
+      clothRelief: n(c.clothRelief),
+      // The cloth wipe stacks the clips in sequence order: this project's
+      // clip lies under the one before it, which the fall drags away.
+      clothUnder: territoryRingFor(clip)[1],
+      holdDrop: c.holdDrop.checked,
+      dropBounce: n(c.dropBounce),
       idleField: c.idleField.value as IdleField,
       stagger: n(c.stagger),
       clip,
@@ -1410,6 +1599,12 @@ function createMeshPanel(
       familyMode,
       homeClip: homeClipFor(c.text.value, familyMode, clip),
       seed: MESH_DEFAULTS.seed,
+      territoryRing: territoryRingFor(clip),
+      territoryRegions: n(c.territoryRegions),
+      territoryGrowth: n(c.territoryGrowth),
+      territoryBreath: n(c.territoryBreath),
+      // a lone project has no one to hand over to; the sequence turns it on
+      territoryHandover: false,
       view: Number(c.view.value),
     };
   }
@@ -1420,9 +1615,11 @@ function createMeshPanel(
     const next = projectParams(read(), projectIndex);
     const sendParams = (value: MeshParams) => {
       firstShowcase.setParams(projectParams(value, 0));
-      if (duo()) {
-        ensureSecond();
-        secondShowcase?.setParams(projectParams(value, 1));
+      if (sequenced()) {
+        ensureProjects();
+        if (sequenceCount() >= 2) secondShowcase?.setParams(projectParams(value, 1));
+        if (sequenceCount() >= 3) thirdShowcase?.setParams(projectParams(value, 2));
+        if (sequenceCount() >= 4) fourthShowcase?.setParams(projectParams(value, 3));
       }
     };
     if (solveChanged) {
@@ -1445,15 +1642,19 @@ function createMeshPanel(
   }
 
   function labels() {
-    const p = read();
+    const p = projectParams(read(), projectIndex);
     const status = showcase.status();
-    out('m-text-out').textContent = `${p.text.length} chars`;
+    const territories = p.footage === 'territories';
+    // A territories sequence sets each project's word at the size prototype 3
+    // solved it at, so the size controls have nothing left to steer.
+    const fixedWords = territories && sequenced();
+    out('m-text-out').textContent = `${p.text.replace('\n', '').length} chars${p.text.includes('\n') ? ' · 2 lines' : ''}`;
     // In auto the slider is inert, so the readout has to show the size that was
     // actually rasterised, not the one the slider still points at.
     out('m-font-out').textContent = p.fontAuto
       ? `auto ${status.fontPx > 0 ? Math.round(status.fontPx) : '…'} px`
-      : `${p.fontSize} px`;
-    c.font.disabled = p.fontAuto;
+      : `${p.fontSize} px${fixedWords ? ' · per project' : ''}`;
+    c.font.disabled = p.fontAuto || fixedWords;
     out('m-offx-out').textContent = `${p.offsetX} px`;
     out('m-offy-out').textContent = `${p.offsetY} px`;
     out('m-drift-out').textContent = `±${p.driftAmount} px`;
@@ -1485,11 +1686,14 @@ function createMeshPanel(
     out('m-hold-out').textContent = `${p.hold.toFixed(1)} s`;
     out('m-release-out').textContent = `${p.release.toFixed(1)} s`;
     const cycle = cycleOf(p);
-    const total = cycle.loop * (duo() ? 2 : 1);
-    out('m-loop-out').textContent = `${total.toFixed(1)} s loop${duo() ? ' · 2 projects' : ''}`;
+    const count = sequenceCount();
+    const total = cycle.loop * count;
+    out('m-loop-out').textContent = `${total.toFixed(1)} s loop${sequenced() ? ` · ${count} projects` : ''}`;
     c.time.max = total.toFixed(2);
-    c.text.disabled = duo();
-    c.clip.disabled = duo();
+    c.text.disabled = sequenced();
+    c.clip.disabled = sequenced();
+    c.cols.disabled = false;
+    c.fontAuto.disabled = fixedWords;
     out('m-strength-out').textContent = p.strength.toFixed(2) + (p.strength > 1.1 ? ' · sticker' : p.strength < 0.35 ? ' · faint' : '');
     out('m-sched-out').textContent = `s ${status.strength.toFixed(2)}`;
     out('m-flare-peak-out').textContent = p.flarePeak.toFixed(2);
@@ -1500,15 +1704,60 @@ function createMeshPanel(
     const smoothPx = p.smoothingPx ?? p.smoothing;
     out('m-smooth-out').textContent = `${smoothPx.toFixed(1)} px screen target`;
     out('m-jumble-shading-out').textContent = p.jumbleShading === 'on' ? 'stacks' : 'clips only';
-    out('m-footage-out').textContent = p.footage === 'jumble' ? 'fixed mix' : 'one clip';
-    c.idleField.disabled = !p.commit;
-    c.commitTransition.disabled = !p.commit;
-    out('m-commit-transition-out').textContent = !p.commit
-      ? 'needs commit'
-      : p.commitTransition === 'push' ? 'far first, finishes at full strength' : p.commitTransition === 'squeeze' ? 'contracts into the new clip' : 'instant';
-    c.stagger.disabled = !p.commit;
-    c.family.disabled = !p.commit;
-    c.familyMode.disabled = !p.commit;
+    out('m-footage-out').textContent = p.footage === 'jumble'
+      ? 'fixed mix'
+      : territories
+        ? `${sequenceCount()} regions`
+        : p.footage === 'cloth' || p.footage === 'clothmesh' || p.footage === 'clothlift'
+          ? `${clipNames[p.homeClip] ?? p.homeClip} → ${clipNames[p.clothUnder] ?? p.clothUnder}`
+          : 'one clip';
+    // Territories never commit: each region keeps one continuous clip.
+    const committing = p.commit && !territories;
+    c.commit.disabled = territories;
+    c.idleField.disabled = !committing;
+    c.commitTransition.disabled = !committing;
+    out('m-commit-transition-out').textContent = territories
+      ? 'unused by territories'
+      : !p.commit
+        ? 'needs commit'
+        : p.commitTransition === 'flow'
+          ? (p.footage === 'jumble' ? 'collage squeezed into the word' : 'needs the jumble')
+          : p.commitTransition === 'push' ? 'far first, finishes at full strength' : p.commitTransition === 'squeeze' ? 'contracts into the new clip' : 'instant';
+    const flowing = committing && p.footage === 'jumble' && p.commitTransition === 'flow';
+    c.clothFrontier.disabled = !flowing;
+    out('m-cloth-frontier-out').textContent = !flowing
+      ? 'needs flow'
+      : !hasClothBake(p.text)
+        ? 'no bake for this word'
+        : p.clothFrontier === 'off' ? 'plain distance' : p.clothFrontier === 'height' ? 'sag bends it' : p.clothFrontier === 'frontier' ? 'edge rides the fabric' : 'edge and collage ride it';
+    // The cloth wipe is the bake on its own: one clip, no field, no glyph.
+    const wiping = p.footage === 'cloth' || p.footage === 'clothmesh' || p.footage === 'clothlift';
+    c.clothRelief.disabled = !wiping;
+    out('m-cloth-relief-out').textContent = !wiping
+      ? 'needs the cloth wipe'
+      : !hasClothBake(p.text)
+        ? 'no bake for this word'
+        : p.clothRelief > 0.02 ? `relief ${(p.clothRelief * 100).toFixed(0)}%` : 'squeeze only';
+    c.holdDrop.disabled = !flowing;
+    c.dropBounce.disabled = !flowing || !p.holdDrop;
+    out('m-drop-bounce-out').textContent = !flowing ? 'needs flow' : !p.holdDrop ? 'word stays put' : p.dropBounce < 0.05 ? 'lands dead' : `keeps ${(p.dropBounce * 100).toFixed(0)}% per bounce`;
+    c.stagger.disabled = !committing;
+    c.family.disabled = !committing;
+    c.familyMode.disabled = !committing;
+    c.territoryRegions.disabled = !territories;
+    c.territoryGrowth.disabled = !territories;
+    c.territoryBreath.disabled = !territories;
+    // The featured project holds 40% of the width at rest and grows by twice
+    // this on each side of every region it holds.
+    const heldShare = Math.min(1, 0.4 + 2 * p.territoryGrowth);
+    out('m-territory-growth-out').textContent = `${p.territoryGrowth.toFixed(2)} · 40→${Math.round(heldShare * 100)}%${p.territoryGrowth >= 0.3 ? ' · bands shut' : ''}`;
+    out('m-territory-breath-out').textContent = p.territoryBreath > 0 ? `±${Math.round(40 * p.territoryBreath)} px` : 'still';
+    const perProject = Math.round(p.territoryRegions);
+    out('m-territory-regions-out').textContent = perProject === 1 ? '1 · prototype 3' : `${perProject} · bands interleave`;
+    const [left, featured, right] = territoryNeighbours(p.territoryRing, sequenced() ? projectIndex : 0)
+      .map((clip) => clipNames[clip] ?? `clip ${clip}`);
+    out('m-territory-roles-out').textContent = territories ? `${left} | ${featured} | ${right}` : 'needs territories';
+    caption();
     out('m-idle-field-out').textContent = p.idleField === 'jumble' ? 'collage' : 'one clip';
     out('m-stagger-out').textContent = p.stagger.toFixed(2);
     // In origin mode the Clip select stops meaning "the single clip" and starts
@@ -1517,18 +1766,22 @@ function createMeshPanel(
     const groundName = clipNames[p.homeClip] ?? selectedName;
     const originActive = p.commit && p.familySplit && p.familyMode !== 'luminance';
     const matched = p.familyMode === 'origin-auto' && p.homeClip !== p.clip;
-    out('m-family-mode-out').textContent = !p.commit
-      ? 'needs commit'
-      : p.familyMode === 'luminance'
-        ? 'dark out / bright in'
-        : p.familyMode === 'origin-auto'
-          ? `ground → ${groundName}${matched ? ' · from the word' : ' · no match, using Clip'}`
-          : `ground → ${groundName}`;
-    out('m-clip-out').textContent = originActive && p.familyMode === 'origin'
-      ? `${selectedName} · home`
-      : originActive && !matched
-        ? `${selectedName} · home (fallback)`
-        : selectedName;
+    out('m-family-mode-out').textContent = territories
+      ? 'unused by territories'
+      : !p.commit
+        ? 'needs commit'
+        : p.familyMode === 'luminance'
+          ? 'dark out / bright in'
+          : p.familyMode === 'origin-auto'
+            ? `ground → ${groundName}${matched ? ' · from the word' : ' · no match, using Clip'}`
+            : `ground → ${groundName}`;
+    out('m-clip-out').textContent = territories
+      ? `${selectedName} · featured`
+      : originActive && p.familyMode === 'origin'
+        ? `${selectedName} · home`
+        : originActive && !matched
+          ? `${selectedName} · home (fallback)`
+          : selectedName;
     out('m-view-out').textContent = c.view.selectedOptions[0]?.textContent ?? '';
 
     // cells per stroke, live, against the floor for the ACTIVE mode
@@ -1545,9 +1798,17 @@ function createMeshPanel(
   }
 
   function statusLine() {
+    if (waitingFor >= 0) {
+      const pending = display(waitingFor).engine?.status();
+      c.status.textContent = pending
+        ? `${pending.solving ? `Preparing ${projectNames[waitingFor]} ${(pending.progress * 100).toFixed(0)}%` : `Loading ${projectNames[waitingFor]} footage`} · keeping the collage visible`
+        : `Preparing ${projectNames[waitingFor]} · keeping the collage visible`;
+      return;
+    }
     const s = showcase.status();
     const solving = s.solving ? `solving ${(s.progress * 100).toFixed(0)}% · ` : '';
-    c.status.textContent = `${solving}a ${s.amplitude.toFixed(2)} · s ${s.strength.toFixed(2)} · t ${s.time.toFixed(1)}/${s.loop.toFixed(1)}s · ${s.frameMs.toFixed(1)} ms · ${s.note}`;
+    const featured = s.territoryShare > 0 ? `featured ${(s.territoryShare * 100).toFixed(0)}% · ` : '';
+    c.status.textContent = `${solving}a ${s.amplitude.toFixed(2)} · s ${s.strength.toFixed(2)} · ${featured}t ${s.time.toFixed(1)}/${s.loop.toFixed(1)}s · ${s.frameMs.toFixed(1)} ms · ${s.note}`;
   }
 
   function drawCurve() {
@@ -1556,7 +1817,7 @@ function createMeshPanel(
     const w = c.curve.width;
     const h = c.curve.height;
     const cycle = cycleOf(params);
-    const count = duo() ? 2 : 1;
+    const count = sequenceCount();
     const total = cycle.loop * count;
     const top = 10;
     const bottom = h - 16;
@@ -1608,11 +1869,12 @@ function createMeshPanel(
     ctx.fillText('a(t)', 8, h - 2);
     ctx.fillStyle = '#d1603d';
     ctx.fillText('s(t)', 56, h - 2);
-    if (duo()) {
+    if (sequenced()) {
       ctx.fillStyle = '#aeb7c2';
       ctx.font = '12px ui-monospace, monospace';
-      ctx.fillText('Yope3D', 8, top + 12);
-      ctx.fillText('SpinStack', w / 2 + 8, top + 12);
+      for (let project = 0; project < count; project++) {
+        ctx.fillText(projectNames[project], (project / count) * w + 8, top + 12);
+      }
     }
   }
 
@@ -1622,7 +1884,7 @@ function createMeshPanel(
     c.algo, c.correspondence, c.gain, c.band, c.spread, c.ampAuto, c.amp, c.idle, c.settle, c.hold, c.release,
     c.releaseShape, c.strength, c.schedule, c.flarePeak, c.flareCentre, c.flareWidth,
     c.polarity, c.smooth, c.jumbleShading, c.luma, c.clamp, c.footage, c.idleField, c.familyMode,
-    c.stagger, c.clip, c.family, c.commit, c.commitTransition, c.view,
+    c.stagger, c.clip, c.family, c.commit, c.commitTransition, c.clothFrontier, c.clothRelief, c.holdDrop, c.dropBounce, c.territoryRegions, c.territoryGrowth, c.territoryBreath, c.view,
   ];
   everyControl.forEach((control) => {
     if (control === c.sequence) return;
@@ -1668,16 +1930,19 @@ function createMeshPanel(
     changedOut.classList.toggle('warn', total > 0);
   }
 
-  // The two-project origin-push treatment is this page's starting point.
+  // The four-project territories treatment is this page's starting point.
   // Capture it as the reset target after the controls have been populated.
-  selectPreset('origin-push');
+  selectPreset(DEFAULT_PRESET);
   everyControl.forEach((control) => defaultOf.set(control, valueOf(control)));
   markChanged();
 
   el<HTMLButtonElement>('m-reset').addEventListener('click', () => {
     everyControl.forEach((control) => setValue(control, defaultOf.get(control) ?? valueOf(control)));
-    c.preset.value = 'origin-push';
+    c.preset.value = DEFAULT_PRESET;
     clock = 0;
+    laps = 0;
+    handoffFrom = -1;
+    waitingFor = -1;
     syncProject(0);
     apply(true);
     markChanged();
@@ -1734,12 +1999,15 @@ function createMeshPanel(
     if (solveTimer !== null) window.clearTimeout(solveTimer);
     solveTimer = null;
     clock = 0;
-    if (!duo()) {
+    laps = 0;
+    handoffFrom = -1;
+    waitingFor = -1;
+    if (!sequenced()) {
       c.text.value = projectNames[0];
       c.clip.value = '0';
     }
     syncProject(0);
-    if (duo()) selectPreset('origin-push');
+    if (sequenced()) selectPreset(DEFAULT_PRESET);
     else apply(false);
     markChanged();
   });
@@ -1751,8 +2019,31 @@ function createMeshPanel(
     running = false;
     c.play.textContent = 'Run cycle';
     clock = Number(c.time.value);
-    if (duo() && clock >= cycleOf(params).loop) secondShowcase?.solveNow();
+    laps = 0;
+    const wanted = Math.min(sequenceCount() - 1, Math.floor(clock / cycleOf(params).loop));
+    if (wanted === 1) secondShowcase?.solveNow();
+    if (wanted === 2) {
+      ensureProjects(2);
+      thirdShowcase?.solveNow();
+    }
+    if (wanted === 3) {
+      ensureProjects(3);
+      fourthShowcase?.solveNow();
+    }
   });
+
+  // The cloth lift's glyph glow, tuned live; ?bevel= sets where it starts.
+  const bevelSlider = document.getElementById('m-cloth-bevel') as HTMLInputElement | null;
+  const bevelOut = document.getElementById('m-cloth-bevel-out');
+  if (bevelSlider) {
+    bevelSlider.value = String(liftBevel());
+    const showBevel = () => {
+      setLiftBevel(Number(bevelSlider.value));
+      if (bevelOut) bevelOut.textContent = Number(bevelSlider.value).toFixed(2);
+    };
+    bevelSlider.addEventListener('input', showBevel);
+    showBevel();
+  }
 
   // A query string can preset the panel and freeze a still, which is how a
   // headless Firefox screenshot can catch the hold rather than the idle.
@@ -1771,6 +2062,13 @@ function createMeshPanel(
   preset('sequence', c.sequence);
   const queryPreset = query.get('preset') as MeshPresetName | null;
   if (queryPreset && queryPreset !== 'custom' && queryPreset in MESH_PRESETS) selectPreset(queryPreset);
+  // after the preset, which would put them back
+  preset('regions', c.territoryRegions);
+  preset('growth', c.territoryGrowth);
+  preset('cloth', c.clothFrontier);
+  preset('relief', c.clothRelief);
+  preset('bounce', c.dropBounce);
+  if (query.has('drop')) c.holdDrop.checked = query.get('drop') === '1';
   if (query.has('amp')) {
     c.ampAuto.checked = false;
     c.amp.value = query.get('amp') ?? '1';
@@ -1780,35 +2078,81 @@ function createMeshPanel(
     running = false;
     c.play.textContent = 'Run cycle';
   }
+  if (query.get('run') === '1') {
+    running = true;
+    c.play.textContent = 'Hold cycle';
+  }
   apply(false);
   markChanged();
   if (query.has('shot')) {
+    ensureProjects(3);
     firstShowcase.solveNow();
     secondShowcase?.solveNow();
+    thirdShowcase?.solveNow();
+    fourthShowcase?.solveNow();
   }
 
   function paint() {
     const cycle = cycleOf(params);
-    const total = cycle.loop * (duo() ? 2 : 1);
-    if (clock >= total || clock < 0) clock = ((clock % total) + total) % total;
-    if (duo()) {
-      // The second word solves while the first is playing. At the handoff both
-      // meshes have returned to the same seeded collage and breathing phase.
-      ensureSecond();
-      if (projectIndex !== 1) secondShowcase?.frame(0);
+    const total = cycle.loop * sequenceCount();
+    if (clock >= total) {
+      laps += Math.floor(clock / total);
+      clock %= total;
+    } else if (clock < 0) {
+      clock = ((clock % total) + total) % total;
     }
-    const wanted = duo() && clock >= cycle.loop ? 1 : 0;
-    const incoming = wanted === 1 ? secondShowcase : firstShowcase;
-    if (incoming?.status().solving && wanted !== projectIndex) {
-      clock = wanted === 1 ? cycle.loop - 0.001 : total - 0.001;
+    const wanted = Math.min(sequenceCount() - 1, Math.floor(clock / cycle.loop));
+    if (sequenced()) {
+      ensureProjects(wanted);
+      // Hidden displays advance their solves and prepare a first frame. The
+      // outgoing display of a handoff is drawn below, in step with the next.
+      if (projectIndex !== 0 && handoffFrom !== 0) firstShowcase.frame(0);
+      if (projectIndex !== 1 && handoffFrom !== 1) secondShowcase?.frame(0);
+      if (projectIndex !== 2 && handoffFrom < 0) thirdShowcase?.frame(0, 14);
+      if (projectIndex !== 3 && handoffFrom < 0) fourthShowcase?.frame(0, 14);
+    }
+    const incoming = display(wanted).engine;
+    const incomingStatus = incoming?.status();
+    if (wanted !== projectIndex && (!incomingStatus || incomingStatus.solving || incomingStatus.vertices === 0 || !incomingStatus.ready)) {
+      clock = wanted > projectIndex ? wanted * cycle.loop - 0.001 : total - 0.001;
+      waitingFor = wanted;
     } else if (projectIndex !== wanted) {
-      syncProject(wanted);
+      waitingFor = -1;
+      const previous = projectIndex;
+      const blend = running && active && sequenced() && handoffSeconds() > 0;
+      syncProject(wanted, blend ? previous : -1);
       params = projectParams(read(), wanted);
       labels();
+      if (blend) handoffFrom = previous;
+    } else {
+      waitingFor = -1;
     }
-    showcase.frame(clock - projectIndex * cycle.loop);
+    const localTime = clock - projectIndex * cycle.loop;
+    const motion = clock + laps * total;
+    // How many projects have been shown before this one. A lone project keeps
+    // its borders from one loop to the next, so it stays at zero.
+    const shown = sequenced() ? laps * sequenceCount() + projectIndex : 0;
+    if (handoffFrom >= 0) {
+      const blend = handoffSeconds();
+      if (running && localTime < blend) {
+        // Blend only during idle, where both projects' fields are at zero. The
+        // outgoing project is drawn at the incoming one's time, so the two
+        // canvases share one lattice and the blend only crossfades footage.
+        showDisplay(projectIndex, active, 1, 1);
+        showDisplay(handoffFrom, active, 1 - smoothUnit(localTime / blend), 3);
+        display(handoffFrom).engine?.frame(localTime, 9, motion, shown - 1);
+      } else {
+        showDisplay(handoffFrom, false);
+        showDisplay(projectIndex, active);
+        handoffFrom = -1;
+      }
+    }
+    // Keep the last good outgoing frame in its preserved drawing buffer while
+    // the next display prepares. Repeated redraws at the release boundary can
+    // expose an empty video texture if Firefox's decoder is catching up.
+    if (waitingFor < 0) showcase.frame(localTime, 9, motion, shown);
     c.time.value = clock.toFixed(2);
-    out('m-time-out').textContent = `${clock.toFixed(1)} s${duo() ? ` · ${projectNames[projectIndex]}` : ''}`;
+    out('m-time-out').textContent = `${clock.toFixed(1)} s${sequenced() ? ` · ${projectNames[projectIndex]}` : ''}`;
     statusLine();
     drawCurve();
   }
@@ -1816,7 +2160,10 @@ function createMeshPanel(
   return {
     frame(delta) {
       if (!active) return;
-      if (running) clock += delta;
+      // Idle until the first word's field lands, so the opening cycle never
+      // plays without it and the word never pops in partway through forming.
+      const first = showcase.status();
+      if (running && !(first.solving && first.solveMs === 0)) clock += delta;
       paint();
       const s = showcase.status();
       out('m-sched-out').textContent = `s ${s.strength.toFixed(2)}`;
@@ -1825,6 +2172,8 @@ function createMeshPanel(
     },
     setActive(next) {
       active = next;
+      handoffFrom = -1;
+      waitingFor = -1;
       syncProject(projectIndex);
       if (next) {
         apply(false);
@@ -1841,7 +2190,8 @@ export async function startShowcaseTest() {
   const mask = element<HTMLVideoElement>('mask-video');
   const generatedMaskCanvas = element<HTMLCanvasElement>('generated-mask');
   const footage = Array.from(document.querySelectorAll<HTMLVideoElement>('video[data-clip]'));
-  const videos = [mask, ...footage];
+  const meshFootage = [...footage, element<HTMLVideoElement>('media').querySelector<HTMLVideoElement>('video[data-mesh-clip]')!];
+  const videos = [mask, ...meshFootage];
   const maskButton = element<HTMLButtonElement>('mask-toggle');
   const footageButton = element<HTMLButtonElement>('footage-toggle');
   const timeline = element<HTMLInputElement>('timeline');
@@ -1862,6 +2212,10 @@ export async function startShowcaseTest() {
   const meshDebugCanvas = element<HTMLCanvasElement>('showcase-mesh-debug');
   const meshNextCanvas = element<HTMLCanvasElement>('showcase-mesh-next');
   const meshNextDebugCanvas = element<HTMLCanvasElement>('showcase-mesh-next-debug');
+  const meshThirdCanvas = element<HTMLCanvasElement>('showcase-mesh-third');
+  const meshThirdDebugCanvas = element<HTMLCanvasElement>('showcase-mesh-third-debug');
+  const meshFourthCanvas = element<HTMLCanvasElement>('showcase-mesh-fourth');
+  const meshFourthDebugCanvas = element<HTMLCanvasElement>('showcase-mesh-fourth-debug');
   const treatment = element<HTMLSelectElement>('treatment');
   const legacyControls = element('legacy-controls');
   const meshControls = element('mesh-controls');
@@ -1949,7 +2303,7 @@ export async function startShowcaseTest() {
 
   async function playback() {
     if (!initialized) return;
-    const wanted = [maskMoving && maskAvailable, ...footage.map(() => footageMoving)];
+    const wanted = [maskMoving && maskAvailable, ...meshFootage.map(() => footageMoving)];
     const results = await Promise.allSettled(videos.map((video, index) => {
       if (wanted[index] && !document.hidden) return video.play();
       video.pause();
@@ -1962,7 +2316,7 @@ export async function startShowcaseTest() {
     }
     if (results.slice(1).every((result) => result.status === 'rejected')) {
       footageMoving = false;
-      footage.forEach((video) => video.pause());
+      meshFootage.forEach((video) => video.pause());
     }
     labels();
     dirty = true;
@@ -1985,7 +2339,7 @@ export async function startShowcaseTest() {
       maskDuration = MASK_DURATION;
       dirty = true;
     });
-    footage.forEach((video) => video.addEventListener('loadeddata', () => {
+    meshFootage.forEach((video) => video.addEventListener('loadeddata', () => {
       dirty = true;
       void playback();
     }));
@@ -2085,7 +2439,7 @@ export async function startShowcaseTest() {
     }
     const activeRenderer = renderer;
     try {
-      meshPanel = createMeshPanel(meshCanvas, footage, meshDebugCanvas, meshNextCanvas, meshNextDebugCanvas);
+      meshPanel = createMeshPanel(meshCanvas, meshFootage, meshDebugCanvas, meshNextCanvas, meshNextDebugCanvas, meshThirdCanvas, meshThirdDebugCanvas, meshFourthCanvas, meshFourthDebugCanvas);
     } catch (error) {
       console.error(error);
       meshCanvas.dataset.meshError = error instanceof Error ? error.message : String(error);
