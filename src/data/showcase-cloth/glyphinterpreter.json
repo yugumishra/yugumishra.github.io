@@ -1,0 +1,60 @@
+{
+ "version": 2,
+ "word": "Glyph\nInterpreter",
+ "fontPx": 193.20789877398306,
+ "frames": [
+  1,
+  7,
+  13,
+  19,
+  25,
+  31,
+  37,
+  43,
+  49,
+  55,
+  61,
+  67,
+  73,
+  79,
+  85,
+  91,
+  97,
+  103,
+  109,
+  115,
+  121,
+  127,
+  133,
+  139,
+  145
+ ],
+ "grid": {
+  "x0": -64,
+  "y0": -64,
+  "step": 16,
+  "width": 89,
+  "height": 54
+ },
+ "layout": "per sample frame: material x offset, material y offset, height; int16 row-major grids",
+ "offsetScale": 0.125,
+ "heightScale": 0.001,
+ "heightUnit": "Blender units, 100 canvas px each",
+ "sheet": {
+  "columns": 153,
+  "rows": 97,
+  "spacingPx": 10.0,
+  "marginPx": 120.0
+ },
+ "fall": {
+  "end": 145,
+  "height": 0.02,
+  "hitDrop": 0.75,
+  "depth": 1.2,
+  "friction": 15.0,
+  "timeScale": 0.040789413807996694,
+  "impulseClamp": 2.0
+ },
+ "data": "media/showcase-test/cloth/glyphinterpreter.bin",
+ "description": "A cloth on a floor with holes the shape of the word; the letters fall through together and pull it in. Seen from above, top layer first."
+}
