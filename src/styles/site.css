@@ -243,6 +243,49 @@ main {
   width: 100%;
   min-width: 0;
 }
+/* A dark halo under the intro's text, so it reads over the showcase behind
+   it. The buttons have their own plates and keep clean labels. */
+.hero h1,
+.hero .tagline,
+.hero .typed-line {
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.95), 0 0 8px rgb(0 0 0 / 0.9), 0 0 20px rgb(0 0 0 / 0.8), 0 0 36px rgb(0 0 0 / 0.6);
+}
+/* The project showcase behind the intro, dimmed so the text over it reads.
+   The stage is the canvas's 16:9 fitted inside the section, so no word is
+   cropped, with its edges faded into the page. */
+#intro {
+  position: relative;
+  isolation: isolate;
+}
+.hero-showcase {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  opacity: 0.67;
+  pointer-events: none;
+  container-type: size;
+}
+.hero-showcase[hidden] {
+  display: none;
+}
+.hero-showcase-stage {
+  position: relative;
+  width: min(100cqw, 100cqh * 16 / 9);
+  aspect-ratio: 16 / 9;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+  mask-composite: intersect;
+}
+.hero-showcase canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
 .hero h1 {
   font-size: clamp(2.5rem, 7vw, 4.25rem);
   line-height: 1.05;
@@ -293,6 +336,7 @@ main {
 .hero .tagline {
   color: var(--muted);
   font-size: 1.05rem;
+  font-weight: 600;
   max-width: 40rem;
   margin: 0 0 0.75rem;
 }

@@ -131,6 +131,32 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
 <Base>
   {/* ---------------- intro ---------------- */}
   <section id="intro" class="section">
+    {/* The project showcase behind the intro; src/scripts/showcase-opening.ts
+        starts it, and leaves it hidden when it should not run. */}
+    <div class="hero-showcase" id="hero-showcase" aria-hidden="true" hidden>
+      <div class="hero-showcase-stage">
+        <canvas width="1280" height="720"></canvas>
+        <canvas width="1280" height="720" hidden></canvas>
+        <canvas width="1280" height="720" hidden></canvas>
+        <canvas width="1280" height="720" hidden></canvas>
+      </div>
+      {/* The engine's clips, in its clip order. None loads until the showcase
+          asks for it, one project ahead of when it is seen. */}
+      <div hidden>
+        <video muted loop playsinline preload="none">
+          <source src="/media/yope_cloth_b.webm" type="video/webm" />
+          <source src="/media/yope_cloth_b.mp4" type="video/mp4" />
+        </video>
+        <video src="/media/showcase-test/spinstack.mp4" muted loop playsinline preload="none"></video>
+        <video src="/media/showcase-test/digits.mp4" muted loop playsinline preload="none"></video>
+        {/* no project uses clip 3; kept empty so the clip numbers hold */}
+        <video muted loop playsinline preload="none"></video>
+        <video muted loop playsinline preload="none">
+          <source src="/media/glyph_demo.webm" type="video/webm" />
+          <source src="/media/glyph_demo.mp4" type="video/mp4" />
+        </video>
+      </div>
+    </div>
     <div class="wrap hero">
       <h1>
         {hero.greeting_prefix} <span class="name">{hero.greeting_name}</span>
@@ -397,6 +423,12 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
   </section>
 </Base>
 
+<script>
+  import { startShowcaseOpening } from '../scripts/showcase-opening';
+  const showcase = document.getElementById('hero-showcase');
+  if (showcase) startShowcaseOpening(showcase);
+</script>
+
 <script define:vars={{ strings: content.hero.typed_strings }}>
   // Replaces typed.js (~20 lines vs. a vendored library), matching the blog's
   // zero-dependency stance. Honors prefers-reduced-motion.
@@ -535,7 +567,8 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
     const pairClips = (card: HTMLElement) => {
       const primary = card.querySelector<HTMLVideoElement>('[data-sync-primary]');
       const secondary = card.querySelector<HTMLVideoElement>('[data-sync-secondary]');
-      if (!primary || !secondary) return () => {};
+      const figure = card.querySelector<HTMLElement>('.media-synced');
+      if (!primary || !secondary || !figure) return () => {};
 
       const TOLERANCE = 0.08;
       let timer = 0;
@@ -549,9 +582,12 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
         if (Math.abs(delta) > TOLERANCE) secondary.currentTime = primary.currentTime;
       };
 
-      return (expanded: boolean) => {
+      // `active` is not just "expanded": the second clip is a companion to the
+      // first slide, so paging the carousel to a still has to retire it too.
+      return (active: boolean) => {
         window.clearInterval(timer);
-        if (!expanded) {
+        figure.classList.toggle('is-visible', active);
+        if (!active) {
           secondary.pause();
           return;
         }
