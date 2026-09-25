@@ -1241,8 +1241,10 @@ footer {
 .project.has-synced.is-expanded .media-slide video {
   height: auto;
 }
-.project.has-synced.is-expanded .media-synced {
+.project.has-synced.is-expanded .media-synced.is-visible {
   display: block;
+}
+.project.has-synced.is-expanded .media-synced {
   margin: 0;
   border-top: 1px solid var(--border);
   background: var(--plate);
@@ -1256,6 +1258,16 @@ footer {
      without this the card grows again after expanding and the FLIP lands
      on a stale height. Matches the 840x653 render. */
   aspect-ratio: 840 / 653;
+}
+/* The arrows centre themselves on .media, which once the second clip is in
+   flow is the whole stacked column -- putting them on top of the matplotlib
+   view. Matching the box to the primary clip's 900x582 puts them back over it,
+   and carries .media-count (positioned against .media-controls) along. */
+.project.has-synced.is-expanded .media-controls {
+  inset: 0 0 auto;
+  aspect-ratio: 900 / 582;
+  height: auto;
+  transform: none;
 }
 .project.has-synced.is-expanded .media-synced figcaption {
   padding: 0.6rem 0.9rem 0.8rem;

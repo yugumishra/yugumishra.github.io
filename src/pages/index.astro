@@ -564,6 +564,22 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
 
     const clipPairs = new Map(cards.map((card) => [card, pairClips(card)]));
 
+    // The cards' clips load and play only while they are near the viewport;
+    // until then their posters stand in. Reduced motion keeps the posters.
+    const stillOnly = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const inView = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const video = entry.target as HTMLVideoElement;
+        if (entry.isIntersecting && !stillOnly) {
+          video.preload = 'auto';
+          void video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      }
+    }, { rootMargin: '200px 0px' });
+    document.querySelectorAll<HTMLVideoElement>('video[data-play-in-view]').forEach((video) => inView.observe(video));
+
     cards.forEach((card) => {
       card.querySelector<HTMLButtonElement>('.project-detail-toggle')?.addEventListener('click', () => {
         rearrange(card.classList.contains('is-expanded') ? null : card);
@@ -581,6 +597,7 @@ const ICON_FOR_CONTACT = (icon: string | null) =>
         card.dataset.slide = String(current);
         slides.forEach((slide, index) => { slide.hidden = index !== current; });
         if (count) count.textContent = `${current + 1} / ${slides.length}`;
+        clipPairs.get(card)?.(card.classList.contains('is-expanded') && current === 0);
       };
       card.querySelector('.media-prev')?.addEventListener('click', () => show(Number(card.dataset.slide) - 1));
       card.querySelector('.media-next')?.addEventListener('click', () => show(Number(card.dataset.slide) + 1));

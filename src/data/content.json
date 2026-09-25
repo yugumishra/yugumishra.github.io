@@ -255,7 +255,20 @@
     },
     {
       "title": "GlyphInterpreter",
-      "stills": [],
+      "stills": [
+        {
+          "img": "/assets/img/glyph_embedding_space.png",
+          "alt": "Hand-pose embeddings projected onto the plane through the three gesture centroids, each ringed by its 0.55 acceptance threshold",
+          "caption": "The three enrolled gestures in the 64-d embedding, projected onto the plane through their centroids so the distances between them are exact. They sit 1.18-1.40 apart — the encoder pulls them apart without ever being shown a gesture label.",
+          "contain": true
+        },
+        {
+          "img": "/assets/img/glyph_separability.png",
+          "alt": "Histogram of same-gesture and different-gesture distances, separated by an empty gap",
+          "caption": "Enrolled on the first half of each take, scored on the second. The two populations never overlap, so any threshold in the 0.89-1.04 gap separates them perfectly.",
+          "contain": true
+        }
+      ],
       "blurb": "A handtracking system that learns custom gestures with one shot identification.",
       "img": null,
       "img_alt": "GlyphInterpreter running on a Quest headset",
