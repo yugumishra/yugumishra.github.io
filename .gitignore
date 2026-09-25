@@ -9,3 +9,7 @@ node_modules/
 # logs
 npm-debug.log*
 
+agent-work/
+docs/
+scripts/__pycache__/
+
