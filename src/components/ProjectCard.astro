@@ -87,11 +87,11 @@ const detailId = `project-detail-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-
     {
       video ? (
         <video
-          autoplay
           loop
           muted
           playsinline
-          preload="metadata"
+          preload="none"
+          data-play-in-view
           poster={video.poster.src}
           aria-label={imageAlt}
           data-sync-primary={syncedVideo ? '' : undefined}
